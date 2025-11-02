@@ -23,8 +23,7 @@
 	</developers>
     <modules>
         <module>Base-Pilot-Persistence</module>
-        <module>Kunden-Modul</module>
-        <module>Base-Pilot-Starter</module>
+        <module>Base-Pilot-Initializer</module>
     </modules>
     <scm>
 		<connection/>
