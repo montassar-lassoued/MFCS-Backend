@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SystemConfig>
+    <Modules>
+        <Module name="Persistence" enabled="true">
+            <Database type="PostgreSQL">
+                <Host>localhost</Host>
+                <Port>5432</Port>
+                <Username>appuser</Username>
+                <Password>secret</Password>
+            </Database>
+        </Module>
+        <Module name="TCP" enabled="true">
+            <Controller name="Controller_1" active="false">
+                <Connection>
+                    <Host>0.0.0.0</Host>
+                    <Port>8080</Port>
+                    <Timeout>3000</Timeout>
+                </Connection>
+            </Controller>
+            <Controller name="Controller_2" active="true">
+                <Connection>
+                    <Host>0.0.0.0</Host>
+                    <Port>8080</Port>
+                    <Timeout>3000</Timeout>
+                </Connection>
+            </Controller>
+        </Module>
+        <Module name="UDP" enabled="false">
+            <Controller name="Controller_3" active="true">
+                <Connection>
+                    <Host>0.0.0.0</Host>
+                    <Port>8080</Port>
+                    <Timeout>3000</Timeout>
+                </Connection>
+            </Controller>
+        </Module>
+    </Modules>
+    <Logging level="INFO" file="logs/app.log" />
+</SystemConfig>
