@@ -24,6 +24,8 @@
     <modules>
         <module>Base-Pilot-Persistence</module>
         <module>Base-Pilot-Initializer</module>
+        <module>Base-Pilot-TCP</module>
+        <module>Base-Pilot-UDP</module>
     </modules>
     <scm>
 		<connection/>

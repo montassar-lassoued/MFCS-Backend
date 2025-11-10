@@ -2,11 +2,11 @@
 <SystemConfig>
     <Modules>
         <Module name="Persistence" enabled="true">
-            <Database type="PostgreSQL">
+            <Database type="SQL">
                 <Host>localhost</Host>
                 <Port>5432</Port>
-                <Username>appuser</Username>
-                <Password>secret</Password>
+                <Username>sa</Username>
+                <Password> </Password>
             </Database>
         </Module>
         <Module name="TCP" enabled="true">

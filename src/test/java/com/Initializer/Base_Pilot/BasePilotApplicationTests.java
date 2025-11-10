@@ -1,4 +1,4 @@
-package com.Initializer.Base_Pilot;
+package com.pilot.Base_Pilot;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
