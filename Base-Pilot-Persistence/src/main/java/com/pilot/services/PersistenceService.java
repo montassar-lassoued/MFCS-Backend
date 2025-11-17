@@ -1,6 +1,7 @@
 package com.pilot.services;
 
 import com.pilot.persistence.Persistence;
+import com.pilot.queryExec.QueryExecutor;
 import intf.PilotServices;
 import org.springframework.stereotype.Component;
 import xml.DatabaseConfig;
@@ -36,7 +37,7 @@ public class PersistenceService implements PilotServices<ModuleConfig> {
         persistence.initialize();
 
         _persistences.put(database.getHost(),persistence);
-
+        QueryExecutor.setPersistences(_persistences);
     }
 
     @Override

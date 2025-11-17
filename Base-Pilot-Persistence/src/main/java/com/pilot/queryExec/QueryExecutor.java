@@ -13,7 +13,7 @@ public class QueryExecutor {
 
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final TransferQueue<Object> resultQueue = new LinkedTransferQueue<>();
-    private final HashMap<String,Persistence> persistences = new HashMap<>();
+    private static HashMap<String,Persistence> persistences = new HashMap<>();
     private HikariDataSource dataSource = new HikariDataSource();
 
     private QueryExecutor(){
@@ -42,5 +42,9 @@ public class QueryExecutor {
 
     public TransferQueue<Object> getResultQueue() {
         return resultQueue;
+    }
+
+    public static void setPersistences(HashMap<String,Persistence> persistences) {
+        QueryExecutor.persistences = persistences;
     }
 }
