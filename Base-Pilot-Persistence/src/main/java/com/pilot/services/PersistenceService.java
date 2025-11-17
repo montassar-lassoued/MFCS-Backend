@@ -1,5 +1,6 @@
-package com.pilot;
+package com.pilot.services;
 
+import com.pilot.persistence.Persistence;
 import intf.PilotServices;
 import org.springframework.stereotype.Component;
 import xml.DatabaseConfig;
@@ -15,7 +16,7 @@ import java.util.*;
 @Component
 public class PersistenceService implements PilotServices<ModuleConfig> {
 
-    List<Persistence> _persistences = new ArrayList<>();
+    HashMap<String,Persistence> _persistences = new HashMap<>();
 
     @Override
     public String getName() {
@@ -34,14 +35,14 @@ public class PersistenceService implements PilotServices<ModuleConfig> {
         Persistence persistence = new Persistence(database);
         persistence.initialize();
 
-        _persistences.add(persistence);
+        _persistences.put(database.getHost(),persistence);
 
     }
 
     @Override
     public void validate() {
 
-        for(Persistence p : _persistences){
+        for(Persistence p : _persistences.values()){
             if(!p.isConnected()){
                 throw new RuntimeException("Database not connected: " + p.getHost());
             }
@@ -56,7 +57,7 @@ public class PersistenceService implements PilotServices<ModuleConfig> {
 
     @Override
     public void stop() {
-        for(Persistence p : _persistences){
+        for(Persistence p : _persistences.values()){
             p.close();
         }
     }
@@ -88,7 +89,7 @@ public class PersistenceService implements PilotServices<ModuleConfig> {
                      Scanner scanner = new Scanner(is, StandardCharsets.UTF_8)) {
 
                     scanner.useDelimiter(";"); // Trennung der Statements
-                    try (Connection conn = _persistences.getFirst().getDataSource().getConnection();
+                    try (Connection conn = _persistences.values().iterator().next().getDataSource().getConnection();
                          Statement stmt = conn.createStatement()) {
 
                         while (scanner.hasNext()) {

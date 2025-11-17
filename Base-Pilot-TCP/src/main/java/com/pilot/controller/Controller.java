@@ -1,4 +1,4 @@
-package com.pilot;
+package com.pilot.controller;
 
 
 import xml.ControllerConfig;

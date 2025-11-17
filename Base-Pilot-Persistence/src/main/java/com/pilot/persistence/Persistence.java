@@ -1,4 +1,4 @@
-package com.pilot;
+package com.pilot.persistence;
 
 
 import com.zaxxer.hikari.HikariDataSource;

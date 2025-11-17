@@ -1,9 +1,9 @@
-package com.pilot;
+package com.pilot.services;
 
+import com.pilot.controller.Controller;
 import intf.PilotServices;
 import org.springframework.stereotype.Component;
 import xml.ControllerConfig;
-import xml.DatabaseConfig;
 import xml.ModuleConfig;
 
 import java.io.IOException;
