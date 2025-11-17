@@ -20,6 +20,8 @@ public class QueryExecutor {
 
     }
     public QueryExecutor Create(){
+        Persistence persistence = persistences.entrySet().iterator().next().getValue();
+        dataSource = persistence.getDataSource();
         return  new QueryExecutor();
     }
     public QueryExecutor CreateWithDB(String Database){
