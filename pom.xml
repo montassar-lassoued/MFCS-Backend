@@ -8,7 +8,7 @@
 		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.Initializer</groupId>
+    <groupId>com.pilot</groupId>
 	<artifactId>Base_Pilot</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -26,6 +26,7 @@
         <module>Base-Pilot-Initializer</module>
         <module>Base-Pilot-TCP</module>
         <module>Base-Pilot-UDP</module>
+        <module>Base-Pilot-Common</module>
     </modules>
     <scm>
 		<connection/>

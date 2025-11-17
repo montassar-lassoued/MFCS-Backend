@@ -1,63 +1,101 @@
 package com.pilot;
 
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import intf.PilotServices;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
+import xml.ModuleConfig;
+import xml.ModulesConfig;
+import xml.SystemConfig;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class ModuleInitializer implements ApplicationRunner {
 
+    @Autowired
+    private ApplicationContext context;
+
+    private SystemConfig systemConfig;
+    @Autowired
+    private List<PilotServices<?>> pilotServices;
+
+
     @Override
     public void run(ApplicationArguments args) throws Exception {
 
+
+        System.out.println("==== Registered PilotServices Beans ====");
+        context.getBeansOfType(PilotServices.class)
+                .forEach((name, bean) -> System.out.println(name + " -> " + bean.getClass().getName()));
+
         String absoluteFilePath = args.getSourceArgs()[0];
-        File config_file = new File(absoluteFilePath);
-
-        NodeList modules;
-        /// Configurationsdatei einlesen
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
-        try {
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document document = builder.parse(config_file);
-            document.getDocumentElement().normalize();
-            /// bislang alles gut...Nun Module aus der konfigurationsdatei holen
-            modules = document.getElementsByTagName("Module");
-
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new RuntimeException(e);
-        }
-
-        if (modules == null) {
+            try {
+                XmlMapper xmlMapper = new XmlMapper();
+                systemConfig = xmlMapper.readValue(new File(absoluteFilePath), SystemConfig.class);
+            }
+            catch (MismatchedInputException e) {
+                throw new RuntimeException("XML-Struktur passt nicht zum Datenmodell: " + e.getMessage(), e);
+            }
+            catch (JsonProcessingException e) {
+                System.err.println("Parsing-Fehler in Zeile " + e.getLocation().getLineNr() +
+                        ", Spalte " + e.getLocation().getColumnNr());
+                throw e;
+            }
+            catch (IOException e) {
+                throw new RuntimeException("Fehler beim Lesen der XML-Datei: " + e.getMessage(), e);
+            }
+        if (systemConfig == null) {
             throw new RuntimeException("Es sind Keine Module in die Konfigurationsdatei definiret");
         }
+
         // 1. Discovery
         System.out.println("========= MODULES DISCOVERY =========");
+        ModulesConfig modulesConfig = systemConfig.getModules();
+        for ( ModuleConfig module : modulesConfig.getModules()) {
+            System.out.println("[INFO].... Modul: " + module.getName()+ " - enabled:"+module.isEnabled());
+        }
 
-        for (int i = 0; i < modules.getLength(); i++) {
-            Node node = modules.item(i);
-            if (node.getNodeType() == Node.ELEMENT_NODE) {
-                Element module_Node = (Element) node;
-                String name = module_Node.getAttribute("name");
-                String enabled = module_Node.getAttribute("enabled");
-                String module_name = "Base-Pilot-" + name;
-                // Versuch, das Modul zu finden
-                /*if (modules.contains(module_name)) {
-                    System.out.println("[INFO] ..... Module founded: " + module_name +"   -enabled = "+enabled);
-                } else {
-                    throw new RuntimeException("[INFO] .....Unknown Module: " + name);
-                }*/
+        // 1. Loading
+        System.out.println("========= MODULES LOADED =========");
+        String classpath = System.getProperty("java.class.path");
+        for (String path : classpath.split(File.pathSeparator)) {
+            if (path.endsWith(".jar")) {
+                File jarFile = new File(path);
+                if(jarFile.getName().startsWith("Base-Pilot-")) {
+                    System.out.println("[INFO].... Modul loaded: " + jarFile.getName());
+                }
             }
         }
+
+        // 1. Configuration
+        System.out.println("========= MODULES CONFIG =========");
+        for (ModuleConfig module : modulesConfig.getModules()) {
+            if (module.isEnabled()) {
+                System.out.println("Config Modul: " + module.getName());
+                pilotServices.stream()
+                        .filter(m -> m.getName().equalsIgnoreCase(module.getName()))
+                        .findFirst()
+                        .ifPresent(m -> startModule(m, module));
+            }
+        }
+    }
+    /**
+     * Module werden hier initialisiert*/
+    @SuppressWarnings("unchecked")
+    private <T> void startModule(PilotServices<T> module, Object config) {
+        module.configuration((T) config);
+    }
+
+    public ModulesConfig getSystemConfig() {
+        return systemConfig.getModules();
     }
 }

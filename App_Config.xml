@@ -3,10 +3,10 @@
     <Modules>
         <Module name="Persistence" enabled="true">
             <Database type="SQL">
-                <Host>localhost</Host>
-                <Port>5432</Port>
-                <Username>sa</Username>
-                <Password> </Password>
+                <Host>jdbc:sqlserver://localhost\\SQLEXPRESS:1433;databaseName=Fight_Club_Chemnitz1;encrypt=false;</Host>
+                <Port>1434</Port>
+                <Username>fight_user</Username>
+                <Password>fight_user</Password>
             </Database>
         </Module>
         <Module name="TCP" enabled="true">
@@ -25,7 +25,7 @@
                 </Connection>
             </Controller>
         </Module>
-        <Module name="UDP" enabled="false">
+        <Module name="UDP" enabled="true">
             <Controller name="Controller_3" active="true">
                 <Connection>
                     <Host>0.0.0.0</Host>
@@ -35,5 +35,5 @@
             </Controller>
         </Module>
     </Modules>
-    <Logging level="INFO" file="logs/app.log" />
+    <!--<Logging level="INFO" file="logs/app.log" />-->
 </SystemConfig>
