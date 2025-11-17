@@ -27,6 +27,7 @@ public class Persistence {
         dataSource.setUsername(getUsername());
         dataSource.setPassword(getPassword());
         dataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        dataSource.setAutoCommit(true);
     }
 
     public boolean isConnected() {

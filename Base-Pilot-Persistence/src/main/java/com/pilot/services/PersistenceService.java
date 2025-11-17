@@ -15,9 +15,10 @@ import java.sql.Statement;
 import java.util.*;
 
 @Component
-public class PersistenceService implements PilotServices<ModuleConfig> {
+public class PersistenceService implements PilotServices<ModuleConfig>{
 
     HashMap<String,Persistence> _persistences = new HashMap<>();
+    private boolean running = false;
 
     @Override
     public String getName() {
@@ -53,7 +54,7 @@ public class PersistenceService implements PilotServices<ModuleConfig> {
 
     @Override
     public void run() {
-
+        // PersistenceService benötigt keinen aktiven Run-Loop.
     }
 
     @Override

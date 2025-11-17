@@ -1,9 +1,9 @@
 package intf;
 
-public interface PilotServices<T> {
+public interface PilotServices<T> extends Runnable{
     String getName();
     void configuration(T config);
     void validate();
-    void run();
+    //void run();
     void stop();
 }

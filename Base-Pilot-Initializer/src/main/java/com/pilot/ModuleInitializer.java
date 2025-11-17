@@ -87,6 +87,30 @@ public class ModuleInitializer implements ApplicationRunner {
                         .ifPresent(m -> startModule(m, module));
             }
         }
+
+        // 1. Validate
+        System.out.println("========= MODULES VALIDATE =========");
+        for (ModuleConfig module : modulesConfig.getModules()) {
+            if (module.isEnabled()) {
+                System.out.println("Validate Modul: " + module.getName());
+                pilotServices.stream()
+                        .filter(m -> m.getName().equalsIgnoreCase(module.getName()))
+                        .findFirst()
+                        .ifPresent(PilotServices::validate);
+            }
+        }
+
+        // 1. Run
+        System.out.println("========= MODULES Run =========");
+        for (ModuleConfig module : modulesConfig.getModules()) {
+            if (module.isEnabled()) {
+                System.out.println("Run Modul: " + module.getName());
+                pilotServices.stream()
+                        .filter(m -> m.getName().equalsIgnoreCase(module.getName()))
+                        .findFirst()
+                        .ifPresent(Runnable::run);
+            }
+        }
     }
     /**
      * Module werden hier initialisiert*/
