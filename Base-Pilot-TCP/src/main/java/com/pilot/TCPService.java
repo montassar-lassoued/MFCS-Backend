@@ -43,11 +43,11 @@ public class TCPService implements PilotServices<ModuleConfig> {
         for (Controller controller : _controllers){
             if (controller.isActive()){
                 try (ServerSocket serverSocket = new ServerSocket(controller.getPort())) {
-                    System.out.println("Port " + controller.getPort() + " ist verfügbar.");
+                    System.out.println(controller.getName()+" -Port " + controller.getPort() + " ist verfügbar.");
                 } catch (BindException e) {
-                    System.out.println("Port " + controller.getPort() + " ist bereits belegt.");
+                    System.out.println(controller.getName()+" -Port " + controller.getPort() + " ist bereits belegt.");
                 } catch (IOException e) {
-                    System.err.println("Ein Fehler ist aufgetreten: " + e.getMessage());
+                    System.err.println(controller.getName()+" - Ein Fehler ist aufgetreten: " + e.getMessage());
                 }
             }
         }
