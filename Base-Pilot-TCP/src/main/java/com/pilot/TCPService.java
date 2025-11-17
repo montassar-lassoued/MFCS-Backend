@@ -6,6 +6,9 @@ import xml.ControllerConfig;
 import xml.DatabaseConfig;
 import xml.ModuleConfig;
 
+import java.io.IOException;
+import java.net.BindException;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +40,17 @@ public class TCPService implements PilotServices<ModuleConfig> {
     @Override
     public void validate() {
 
+        for (Controller controller : _controllers){
+            if (controller.isActive()){
+                try (ServerSocket serverSocket = new ServerSocket(controller.getPort())) {
+                    System.out.println("Port " + controller.getPort() + " ist verfügbar.");
+                } catch (BindException e) {
+                    System.out.println("Port " + controller.getPort() + " ist bereits belegt.");
+                } catch (IOException e) {
+                    System.err.println("Ein Fehler ist aufgetreten: " + e.getMessage());
+                }
+            }
+        }
     }
 
     @Override
