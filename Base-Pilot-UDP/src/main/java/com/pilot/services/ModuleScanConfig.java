@@ -1,4 +1,4 @@
-package com.pilot;
+package com.pilot.services;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

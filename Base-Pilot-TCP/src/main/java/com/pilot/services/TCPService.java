@@ -1,5 +1,7 @@
 package com.pilot.services;
 
+import com.pilot.async.AsyncClient;
+import com.pilot.async.AsyncServer;
 import com.pilot.controller.Controller;
 import intf.PilotServices;
 import org.springframework.stereotype.Component;
@@ -8,6 +10,7 @@ import xml.ModuleConfig;
 
 import java.io.IOException;
 import java.net.BindException;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,11 +29,11 @@ public class TCPService implements PilotServices<ModuleConfig> {
     public void configuration(ModuleConfig config) {
         String module_name = config.getName();
         List<ControllerConfig> controllers = config.getControllers();
-        if(controllers == null){
-            throw  new RuntimeException("[ERROR]... Module: "+module_name+"  - controllers Configuration is missing");
+        if (controllers == null) {
+            throw new RuntimeException("[ERROR]... Module: " + module_name + "  - controllers Configuration is missing");
         }
         /// Controller-Liste durchgehen und initialisieren
-        for(ControllerConfig clc:controllers){
+        for (ControllerConfig clc : controllers) {
             Controller controller = new Controller(clc);
 
             _controllers.add(controller);
@@ -40,14 +43,14 @@ public class TCPService implements PilotServices<ModuleConfig> {
     @Override
     public void validate() {
 
-        for (Controller controller : _controllers){
-            if (controller.isActive()){
+        for (Controller controller : _controllers) {
+            if (controller.isActive()) {
                 try (ServerSocket serverSocket = new ServerSocket(controller.getPort())) {
-                    System.out.println(controller.getName()+" -Port " + controller.getPort() + " ist verfügbar.");
+                    System.out.println(controller.getName() + " -Port " + controller.getPort() + " ist verfügbar.");
                 } catch (BindException e) {
-                    System.out.println(controller.getName()+" -Port " + controller.getPort() + " ist bereits belegt.");
+                    throw new RuntimeException(controller.getName() + " -Port " + controller.getPort() + " ist bereits belegt.");
                 } catch (IOException e) {
-                    System.err.println(controller.getName()+" - Ein Fehler ist aufgetreten: " + e.getMessage());
+                    throw new RuntimeException(controller.getName() + " - Ein Fehler ist aufgetreten: " + e.getMessage());
                 }
             }
         }
@@ -55,7 +58,30 @@ public class TCPService implements PilotServices<ModuleConfig> {
 
     @Override
     public void run() {
+        try {
+            for (Controller controller : _controllers) {
+                if (controller.isActive()) {
 
+                    new AsyncServer(controller.getPort()).start();
+
+                } else {
+                    new AsyncClient().connectWithRetry(
+                            new InetSocketAddress(
+                                    controller.getHost(),
+                                    controller.getPort()
+                            ),300);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        // Server weiterlaufen lassen
+        try {
+            Thread.currentThread().join();
+        } catch (InterruptedException ignored) {
+        }
     }
 
     @Override

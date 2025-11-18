@@ -16,6 +16,7 @@ import xml.SystemConfig;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.AsynchronousSocketChannel;
 import java.util.List;
 
 @Component
@@ -31,7 +32,6 @@ public class ModuleInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-
 
         System.out.println("==== Registered PilotServices Beans ====");
         context.getBeansOfType(PilotServices.class)
@@ -108,7 +108,7 @@ public class ModuleInitializer implements ApplicationRunner {
                 pilotServices.stream()
                         .filter(m -> m.getName().equalsIgnoreCase(module.getName()))
                         .findFirst()
-                        .ifPresent(Runnable::run);
+                        .ifPresent(PilotServices::run);
             }
         }
     }

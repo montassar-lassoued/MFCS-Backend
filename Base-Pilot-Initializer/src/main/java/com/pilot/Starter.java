@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 
 
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
-public class starter {
+public class Starter {
 
 
      static void main(String[] args) {
@@ -32,7 +32,7 @@ public class starter {
              ));
          }
 
-         SpringApplication application = new SpringApplication(starter.class);
+         SpringApplication application = new SpringApplication(Starter.class);
          application.setBannerMode(Banner.Mode.OFF);
          application.run(absoluteFilePath.toString());
     }

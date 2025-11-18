@@ -1,8 +1,7 @@
-package com.pilot;
+package com.pilot.services;
 
 import intf.PilotServices;
 import org.springframework.stereotype.Component;
-import xml.ControllerConfig;
 import xml.ModuleConfig;
 
 @Component

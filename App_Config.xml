@@ -12,24 +12,38 @@
         <Module name="TCP" enabled="true">
             <Controller name="Controller_1" active="false">
                 <Connection>
-                    <Host>0.0.0.0</Host>
-                    <Port>8080</Port>
+                    <Host>loclahost</Host>
+                    <Port>1200</Port>
                     <Timeout>3000</Timeout>
                 </Connection>
             </Controller>
             <Controller name="Controller_2" active="true">
                 <Connection>
                     <Host>0.0.0.0</Host>
-                    <Port>8080</Port>
+                    <Port>1201</Port>
+                    <Timeout>3000</Timeout>
+                </Connection>
+            </Controller>
+            <Controller name="Controller_3" active="false">
+                <Connection>
+                    <Host>192.168.2.222</Host>
+                    <Port>1202</Port>
+                    <Timeout>3000</Timeout>
+                </Connection>
+            </Controller>
+            <Controller name="Controller_4" active="true">
+                <Connection>
+                    <Host>0.0.0.0</Host>
+                    <Port>1203</Port>
                     <Timeout>3000</Timeout>
                 </Connection>
             </Controller>
         </Module>
         <Module name="UDP" enabled="true">
-            <Controller name="Controller_3" active="true">
+            <Controller name="Controller_5" active="true">
                 <Connection>
                     <Host>0.0.0.0</Host>
-                    <Port>8080</Port>
+                    <Port>2100</Port>
                     <Timeout>3000</Timeout>
                 </Connection>
             </Controller>
