@@ -11,6 +11,12 @@ public class ControllerConfig {
     @JacksonXmlProperty(localName = "active")
     private boolean active;
 
+    @JacksonXmlProperty(localName = "prefix")
+    private String prefix;
+
+    @JacksonXmlProperty(localName = "suffix")
+    private String suffix;
+
     @JacksonXmlElementWrapper(useWrapping = false)
     @JacksonXmlProperty(localName = "Connection")
     private ConnectionConfig connection;
@@ -40,6 +46,22 @@ public class ControllerConfig {
 
     public void setConnection(ConnectionConfig connection) {
         this.connection = connection;
+    }
+
+    public String getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public String getSuffix() {
+        return suffix;
+    }
+
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
     }
 }
 

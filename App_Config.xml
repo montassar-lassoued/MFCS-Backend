@@ -10,28 +10,28 @@
             </Database>
         </Module>
         <Module name="TCP" enabled="true">
-            <Controller name="Controller_1" active="false">
+            <Controller name="Controller_1" active="false" prefix=" " suffix="" >
                 <Connection>
-                    <Host>loclahost</Host>
+                    <Host>localhost</Host>
                     <Port>1200</Port>
                     <Timeout>3000</Timeout>
                 </Connection>
             </Controller>
-            <Controller name="Controller_2" active="true">
+            <Controller name="Controller_2" active="true" prefix="AAA" suffix="ZZZ">
                 <Connection>
                     <Host>0.0.0.0</Host>
                     <Port>1201</Port>
                     <Timeout>3000</Timeout>
                 </Connection>
             </Controller>
-            <Controller name="Controller_3" active="false">
+            <Controller name="Controller_3" active="false" prefix=" " suffix="">
                 <Connection>
                     <Host>192.168.2.222</Host>
                     <Port>1202</Port>
                     <Timeout>3000</Timeout>
                 </Connection>
             </Controller>
-            <Controller name="Controller_4" active="true">
+            <Controller name="Controller_4" active="true" prefix=" " suffix="">
                 <Connection>
                     <Host>0.0.0.0</Host>
                     <Port>1203</Port>
@@ -40,7 +40,7 @@
             </Controller>
         </Module>
         <Module name="UDP" enabled="true">
-            <Controller name="Controller_5" active="true">
+            <Controller name="Controller_5" active="true" prefix=" " suffix="">
                 <Connection>
                     <Host>0.0.0.0</Host>
                     <Port>2100</Port>

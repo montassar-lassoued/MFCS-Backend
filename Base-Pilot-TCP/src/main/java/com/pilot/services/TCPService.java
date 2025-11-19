@@ -2,7 +2,7 @@ package com.pilot.services;
 
 import com.pilot.async.AsyncClient;
 import com.pilot.async.AsyncServer;
-import com.pilot.controller.Controller;
+import controller.Controller;
 import intf.PilotServices;
 import org.springframework.stereotype.Component;
 import xml.ControllerConfig;
@@ -10,7 +10,6 @@ import xml.ModuleConfig;
 
 import java.io.IOException;
 import java.net.BindException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,14 +61,10 @@ public class TCPService implements PilotServices<ModuleConfig> {
             for (Controller controller : _controllers) {
                 if (controller.isActive()) {
 
-                    new AsyncServer(controller.getPort()).start();
+                    new AsyncServer(controller);
 
                 } else {
-                    new AsyncClient().connectWithRetry(
-                            new InetSocketAddress(
-                                    controller.getHost(),
-                                    controller.getPort()
-                            ),300);
+                    new AsyncClient(controller);
                 }
             }
         } catch (IOException e) {

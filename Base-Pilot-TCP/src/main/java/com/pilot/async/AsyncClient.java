@@ -1,5 +1,7 @@
 package com.pilot.async;
 
+import controller.Controller;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -7,23 +9,28 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class AsyncClient {
 
-    private final Set<AsynchronousSocketChannel> connections =
-            Collections.synchronizedSet(new HashSet<>());
+    private final Map<AsynchronousSocketChannel, Controller> connections = new ConcurrentHashMap<>();
+
     private final AsynchronousChannelGroup group;
 
-    public AsyncClient() throws IOException {
+    public AsyncClient(Controller controller) throws IOException {
         this.group = AsynchronousChannelGroup.withThreadPool(
                 Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2)
         );
+        tryToConnect(controller);
     }
 
-    public void connectWithRetry(InetSocketAddress server, int maxRetries) {
-        if (maxRetries <= 0) return;
+    private void tryToConnect(Controller controller){
+        connectWithRetry(new InetSocketAddress(controller.getHost(),controller.getPort()), 300, controller);
+    }
+    private void connectWithRetry(InetSocketAddress server, int maxRetries, Controller controller) {
+        //if (maxRetries <= 0) return;
 
         try {
             AsynchronousSocketChannel client = AsynchronousSocketChannel.open(group);
@@ -31,7 +38,9 @@ public class AsyncClient {
             client.connect(server, client, new CompletionHandler<>() {
                 @Override
                 public void completed(Void result, AsynchronousSocketChannel ch) {
-                    connections.add(ch);
+                    connections.put(ch, controller);
+                    //add to Map
+
                     System.out.println("Connected to server: " + server);
                     startReading(ch);
 
@@ -42,10 +51,10 @@ public class AsyncClient {
                 @Override
                 public void failed(Throwable exc, AsynchronousSocketChannel ch) {
                     closeQuietly(ch);
-                    System.out.println("Connect failed, retrying in 1s...");
+                    System.out.println("Connect failed, retrying in 5s...");
                     Executors.newSingleThreadScheduledExecutor().schedule(
-                            () -> connectWithRetry(server, maxRetries - 1),
-                            1, TimeUnit.SECONDS
+                            () -> connectWithRetry(server, maxRetries - 1, controller),
+                            5, TimeUnit.SECONDS
                     );
                 }
             });
@@ -85,7 +94,14 @@ public class AsyncClient {
     }
 
     private void handleMessage(AsynchronousSocketChannel client, String message) {
-        System.out.println("Received from server: " + message);
+        Controller controller = connections.get(client);
+        if(controller == null){
+            System.out.println("Received from Unknown Adresse "+client+": " + message);
+        }
+        else {
+            System.out.println("Received from "+controller.getName()+": " + message);
+        }
+
         // hier kann man intern weitere Logik einbauen
 
     }
@@ -112,7 +128,7 @@ public class AsyncClient {
 
     public void broadcast(String msg) {
         synchronized (connections) {
-            for (AsynchronousSocketChannel ch : connections) {
+            for (AsynchronousSocketChannel ch : connections.keySet()) {
                 sendMessage(ch, msg);
             }
         }
@@ -125,7 +141,7 @@ public class AsyncClient {
 
     public void shutdown() throws IOException, InterruptedException {
         synchronized (connections) {
-            for (AsynchronousSocketChannel ch : connections) closeQuietly(ch);
+            for (AsynchronousSocketChannel ch : connections.keySet()) closeQuietly(ch);
         }
         group.shutdown();
         group.awaitTermination(5, TimeUnit.SECONDS);

@@ -1,4 +1,4 @@
-package com.pilot.controller;
+package controller;
 
 
 import xml.ControllerConfig;
@@ -7,6 +7,8 @@ public class Controller {
 
     private String name;
     private boolean active;
+    private String prefix;
+    private String suffix;
     private String host;
     private int port;
     private int timeout;
@@ -16,6 +18,8 @@ public class Controller {
 
         setName(config.getName());
         setActive(config.isActive());
+        setPrefix(config.getPrefix());
+        setSuffix(config.getSuffix());
         setHost(config.getConnection().getHost());
         setPort(config.getConnection().getPort());
         setTimeout(config.getConnection().getTimeout());
@@ -37,6 +41,22 @@ public class Controller {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
+    public String getSuffix() {
+        return suffix;
+    }
+
+    public void setSuffix(String suffix) {
+        this.suffix = suffix;
     }
 
     public String getHost() {

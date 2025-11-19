@@ -1,5 +1,10 @@
 package com.pilot.async;
 
+import com.pilot.services.TCPControllerContentService;
+import controller.Controller;
+import org.springframework.beans.factory.annotation.Autowired;
+import services.ControllerContentService;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -7,9 +12,8 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -18,27 +22,31 @@ public class AsyncServer {
 
     private final AsynchronousServerSocketChannel serverChannel;
     private final AsynchronousChannelGroup group;
-    private final Set<AsynchronousSocketChannel> clients =
-            Collections.synchronizedSet(new HashSet<>());
+    private final Map<AsynchronousSocketChannel, Controller> clients = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Controller _controller;
+    @Autowired
+    private TCPControllerContentService controllerContentService = new TCPControllerContentService();
 
-    public AsyncServer(int port) throws IOException {
+    public AsyncServer(Controller controller) throws IOException {
         this.group = AsynchronousChannelGroup.withThreadPool(
                 Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2)
         );
         this.serverChannel = AsynchronousServerSocketChannel.open(group)
-                .bind(new InetSocketAddress(port));
-    }
+                .bind(new InetSocketAddress(controller.getPort()));
 
-    public void start() {
+        _controller = controller;
         acceptNext();
     }
+
 
     private void acceptNext() {
         serverChannel.accept(null, new CompletionHandler<>() {
             @Override
             public void completed(AsynchronousSocketChannel client, Object attachment) {
-                clients.add(client);
+
+                clients.putIfAbsent(client, _controller);
+
                 System.out.println("Client connected: " + client);
                 startReading(client);
                 acceptNext();
@@ -65,10 +73,10 @@ public class AsyncServer {
                 buf.flip();
                 byte[] data = new byte[bytesRead];
                 buf.get(data);
-                String message = new String(data);
+                //String message = new String(data);
 
                 // Nachrichtenverarbeitung intern
-                handleMessage(client, message);
+                handleMessage(client, data);
 
                 buf.clear();
                 client.read(buf, buf, this);
@@ -82,12 +90,14 @@ public class AsyncServer {
         });
     }
 
-    private void handleMessage(AsynchronousSocketChannel client, String message) {
-        System.out.println("Received from client '': " + message);
-
-        // Beispiel: echo zurücksenden
-        sendMessage(client, "Server echo: " + message);
+    private void handleMessage(AsynchronousSocketChannel client,  byte[] data) {
+        Controller controller = clients.get(client);
+        if(controller != null){
+            controllerContentService.startHandleContent(controller, data);
+        }
     }
+
+
 
     public void sendMessage(AsynchronousSocketChannel client, String msg) {
         byte[] data = msg.getBytes();
@@ -111,7 +121,7 @@ public class AsyncServer {
 
     public void broadcast(String msg) {
         synchronized (clients) {
-            for (AsynchronousSocketChannel ch : clients) {
+            for (AsynchronousSocketChannel ch : clients.keySet()) {
                 sendMessage(ch, msg);
             }
         }
@@ -124,7 +134,7 @@ public class AsyncServer {
 
     public void shutdown() throws IOException, InterruptedException {
         synchronized (clients) {
-            for (AsynchronousSocketChannel ch : clients) closeClient(ch);
+            for (AsynchronousSocketChannel ch : clients.keySet()) closeClient(ch);
         }
         serverChannel.close();
         group.shutdown();
