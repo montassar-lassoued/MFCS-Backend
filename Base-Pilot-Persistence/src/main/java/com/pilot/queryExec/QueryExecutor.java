@@ -14,12 +14,12 @@ public class QueryExecutor {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final TransferQueue<Object> resultQueue = new LinkedTransferQueue<>();
     private static HashMap<String,Persistence> persistences = new HashMap<>();
-    private HikariDataSource dataSource = new HikariDataSource();
+    static HikariDataSource dataSource = new HikariDataSource();
 
     private QueryExecutor(){
 
     }
-    public QueryExecutor Create(){
+    public static QueryExecutor Create(){
         Persistence persistence = persistences.entrySet().iterator().next().getValue();
         dataSource = persistence.getDataSource();
         return  new QueryExecutor();

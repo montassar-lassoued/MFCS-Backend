@@ -2,15 +2,17 @@ package services;
 
 import controller.Controller;
 import intf.ContentServices;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 public class ControllerContentService implements ContentServices {
 
-    private Controller controller;
+    public Controller controller;
 
     public void startHandleContent(Controller _controller, byte[] data){
         // die Schnittstelle

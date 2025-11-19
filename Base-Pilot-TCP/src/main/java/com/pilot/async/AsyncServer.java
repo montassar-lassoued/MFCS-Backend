@@ -26,7 +26,7 @@ public class AsyncServer {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Controller _controller;
     @Autowired
-    private TCPControllerContentService controllerContentService = new TCPControllerContentService();
+    private TCPControllerContentService controllerContentService ;
 
     public AsyncServer(Controller controller) throws IOException {
         this.group = AsynchronousChannelGroup.withThreadPool(

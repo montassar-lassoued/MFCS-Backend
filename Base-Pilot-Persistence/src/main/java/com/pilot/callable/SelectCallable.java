@@ -26,7 +26,10 @@ public class SelectCallable implements Callable<ResultSet> {
         try {
             Connection cn = _dataSource.getConnection();
             PreparedStatement ps =cn.prepareStatement(_query);
-            return ps.executeQuery();
+            ResultSet resultSet = ps.executeQuery();
+            cn.commit();
+
+            return resultSet;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);

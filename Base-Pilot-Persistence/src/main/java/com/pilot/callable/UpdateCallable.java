@@ -25,10 +25,18 @@ public class UpdateCallable implements Callable<Integer> {
         try {
             Connection cn = _dataSource.getConnection();
             PreparedStatement ps =cn.prepareStatement(_query);
-            return ps.executeUpdate();
+            int result = ps.executeUpdate();
+            cn.commit();
+            return result;
 
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        }  catch (Exception e) {
+            // Rückgängig machen bei Fehler
+            try (Connection conn = _dataSource.getConnection()) {
+                conn.rollback();
+            } catch (Exception rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+            throw e;
         }
     }
 }
