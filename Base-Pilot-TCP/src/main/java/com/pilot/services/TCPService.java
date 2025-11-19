@@ -2,8 +2,10 @@ package com.pilot.services;
 
 import com.pilot.async.AsyncClient;
 import com.pilot.async.AsyncServer;
+import com.pilot.async.AsyncServerFactory;
 import controller.Controller;
 import intf.PilotServices;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import xml.ControllerConfig;
 import xml.ModuleConfig;
@@ -18,6 +20,13 @@ import java.util.List;
 public class TCPService implements PilotServices<ModuleConfig> {
 
     List<Controller> _controllers = new ArrayList<>();
+
+    private final AsyncServerFactory serverFactory;
+
+    @Autowired
+    public TCPService(AsyncServerFactory serverFactory) {
+        this.serverFactory = serverFactory;
+    }
 
     @Override
     public String getName() {
@@ -61,7 +70,7 @@ public class TCPService implements PilotServices<ModuleConfig> {
             for (Controller controller : _controllers) {
                 if (controller.isActive()) {
 
-                    new AsyncServer(controller);
+                    serverFactory.create(controller);
 
                 } else {
                     new AsyncClient(controller);

@@ -3,7 +3,6 @@ package com.pilot.async;
 import com.pilot.services.TCPControllerContentService;
 import controller.Controller;
 import org.springframework.beans.factory.annotation.Autowired;
-import services.ControllerContentService;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -24,18 +23,19 @@ public class AsyncServer {
     private final AsynchronousChannelGroup group;
     private final Map<AsynchronousSocketChannel, Controller> clients = new ConcurrentHashMap<>();
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final Controller _controller;
-    @Autowired
+    private final Controller controller;
     private TCPControllerContentService controllerContentService ;
 
-    public AsyncServer(Controller controller) throws IOException {
+    public AsyncServer(Controller controller, TCPControllerContentService controllerContentService) throws IOException {
+        this.controller = controller;
+        this.controllerContentService = controllerContentService;
+
         this.group = AsynchronousChannelGroup.withThreadPool(
                 Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2)
         );
         this.serverChannel = AsynchronousServerSocketChannel.open(group)
                 .bind(new InetSocketAddress(controller.getPort()));
 
-        _controller = controller;
         acceptNext();
     }
 
@@ -45,7 +45,7 @@ public class AsyncServer {
             @Override
             public void completed(AsynchronousSocketChannel client, Object attachment) {
 
-                clients.putIfAbsent(client, _controller);
+                clients.putIfAbsent(client, controller);
 
                 System.out.println("Client connected: " + client);
                 startReading(client);
