@@ -27,6 +27,7 @@
         <module>Base-Pilot-TCP</module>
         <module>Base-Pilot-UDP</module>
         <module>Base-Pilot-Common</module>
+        <module>Base-Pilot-UI</module>
     </modules>
     <scm>
 		<connection/>
