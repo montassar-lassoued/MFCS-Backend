@@ -6,11 +6,17 @@ public class DatabaseConfig {
     @JacksonXmlProperty(localName = "type", isAttribute = true)
     private String type;
 
-    @JacksonXmlProperty(localName = "Host")
+    @JacksonXmlProperty(localName = "host", isAttribute = true)
     private String host;
 
-    @JacksonXmlProperty(localName = "Port")
+    @JacksonXmlProperty(localName = "port", isAttribute = true)
     private int port;
+
+    @JacksonXmlProperty(localName = "name", isAttribute = true)
+    private String name;
+
+    @JacksonXmlProperty(localName = "encrypt", isAttribute = true)
+    private boolean encrypt = true;
 
     @JacksonXmlProperty(localName = "Username")
     private String username;
@@ -39,4 +45,11 @@ public class DatabaseConfig {
         return password;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public boolean getEncrypt() {
+        return encrypt;
+    }
 }

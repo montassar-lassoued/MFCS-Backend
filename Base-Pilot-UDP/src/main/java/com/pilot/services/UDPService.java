@@ -1,6 +1,7 @@
 package com.pilot.services;
 
 import intf.PilotServices;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import xml.ModuleConfig;
 
@@ -12,7 +13,7 @@ public class UDPService implements PilotServices<ModuleConfig> {
     }
 
     @Override
-    public void configuration(ModuleConfig config) {
+    public void configuration(ModuleConfig config, ApplicationContext context) {
 
     }
 

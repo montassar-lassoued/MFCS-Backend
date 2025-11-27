@@ -6,6 +6,7 @@ import com.pilot.async.AsyncServerFactory;
 import controller.Controller;
 import intf.PilotServices;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import xml.ControllerConfig;
 import xml.ModuleConfig;
@@ -34,7 +35,7 @@ public class TCPService implements PilotServices<ModuleConfig> {
     }
 
     @Override
-    public void configuration(ModuleConfig config) {
+    public void configuration(ModuleConfig config, ApplicationContext context) {
         String module_name = config.getName();
         List<ControllerConfig> controllers = config.getControllers();
         if (controllers == null) {

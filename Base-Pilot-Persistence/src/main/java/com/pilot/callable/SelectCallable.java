@@ -1,7 +1,7 @@
 package com.pilot.callable;
 
-import com.zaxxer.hikari.HikariDataSource;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,9 +14,9 @@ public class SelectCallable implements Callable<ResultSet> {
      *
      */
     private final String _query;
-    private final HikariDataSource _dataSource;
+    private final DataSource _dataSource;
 
-    public SelectCallable(String query, HikariDataSource dataSource){
+    public SelectCallable(String query, DataSource dataSource){
         _query = query;
         _dataSource = dataSource;
     }

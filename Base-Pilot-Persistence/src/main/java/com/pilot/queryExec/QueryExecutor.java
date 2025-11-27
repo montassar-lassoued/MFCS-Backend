@@ -4,6 +4,7 @@ import com.pilot.callable.SelectCallable;
 import com.pilot.callable.UpdateCallable;
 import com.pilot.persistence.Persistence;
 import com.zaxxer.hikari.HikariDataSource;
+import javax.sql.DataSource;
 
 import java.sql.ResultSet;
 import java.util.HashMap;
@@ -14,7 +15,7 @@ public class QueryExecutor {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final TransferQueue<Object> resultQueue = new LinkedTransferQueue<>();
     private static HashMap<String,Persistence> persistences = new HashMap<>();
-    static HikariDataSource dataSource = new HikariDataSource();
+    static DataSource dataSource ;
 
     private QueryExecutor(){
 
@@ -36,8 +37,23 @@ public class QueryExecutor {
         return executor.submit(new UpdateCallable(query, dataSource));
     }
 
-    public Future<ResultSet> submitSelect(String query) {
-        return executor.submit(new SelectCallable(query, dataSource));
+    public ResultSet submitSelect(String query) {
+        Future<ResultSet> resultSetFuture = executor.submit(new SelectCallable(query, dataSource));
+
+        try {
+            return  resultSetFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Future<ResultSet> findAll(String table) {
+        String sql = "SELECT * FROM "+table;
+        return executor.submit(new SelectCallable(sql, dataSource));
+    }
+    public Future<ResultSet> findById(String table, Long id) {
+        String sql = "SELECT * FROM "+table+" WHERE ID ="+id;
+        return executor.submit(new SelectCallable(sql, dataSource));
     }
 
     public TransferQueue<Object> getResultQueue() {

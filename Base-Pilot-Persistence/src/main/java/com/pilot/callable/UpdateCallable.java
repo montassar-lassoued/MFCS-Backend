@@ -1,7 +1,7 @@
 package com.pilot.callable;
 
-import com.zaxxer.hikari.HikariDataSource;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -13,9 +13,9 @@ public class UpdateCallable implements Callable<Integer> {
      *
      */
     private final String _query;
-    private final HikariDataSource _dataSource;
+    private final DataSource _dataSource;
 
-    public UpdateCallable(String query, HikariDataSource dataSource){
+    public UpdateCallable(String query, DataSource dataSource){
         _query = query;
         _dataSource = dataSource;
     }

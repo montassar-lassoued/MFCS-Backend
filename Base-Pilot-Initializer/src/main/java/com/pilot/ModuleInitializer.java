@@ -16,7 +16,6 @@ import xml.SystemConfig;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.channels.AsynchronousSocketChannel;
 import java.util.List;
 
 @Component
@@ -24,7 +23,7 @@ public class ModuleInitializer implements ApplicationRunner {
 
     @Autowired
     private ApplicationContext context;
-
+    @Autowired
     private SystemConfig systemConfig;
     @Autowired
     private List<PilotServices<?>> pilotServices;
@@ -32,30 +31,6 @@ public class ModuleInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-
-        System.out.println("==== Registered PilotServices Beans ====");
-        context.getBeansOfType(PilotServices.class)
-                .forEach((name, bean) -> System.out.println(name + " -> " + bean.getClass().getName()));
-
-        String absoluteFilePath = args.getSourceArgs()[0];
-            try {
-                XmlMapper xmlMapper = new XmlMapper();
-                systemConfig = xmlMapper.readValue(new File(absoluteFilePath), SystemConfig.class);
-            }
-            catch (MismatchedInputException e) {
-                throw new RuntimeException("XML-Struktur passt nicht zum Datenmodell: " + e.getMessage(), e);
-            }
-            catch (JsonProcessingException e) {
-                System.err.println("Parsing-Fehler in Zeile " + e.getLocation().getLineNr() +
-                        ", Spalte " + e.getLocation().getColumnNr());
-                throw e;
-            }
-            catch (IOException e) {
-                throw new RuntimeException("Fehler beim Lesen der XML-Datei: " + e.getMessage(), e);
-            }
-        if (systemConfig == null) {
-            throw new RuntimeException("Es sind Keine Module in die Konfigurationsdatei definiret");
-        }
 
         // 1. Discovery
         System.out.println("========= MODULES DISCOVERY =========");
@@ -115,11 +90,7 @@ public class ModuleInitializer implements ApplicationRunner {
     /**
      * Module werden hier initialisiert*/
     @SuppressWarnings("unchecked")
-    private <T> void startModule(PilotServices<T> module, Object config) {
-        module.configuration((T) config);
-    }
-
-    public ModulesConfig getSystemConfig() {
-        return systemConfig.getModules();
+    private  <T> void startModule(PilotServices<T> module, Object config) {
+        module.configuration((T) config, context);
     }
 }

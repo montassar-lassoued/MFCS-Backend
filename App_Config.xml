@@ -2,9 +2,7 @@
 <SystemConfig>
     <Modules>
         <Module name="Persistence" enabled="true">
-            <Database type="SQL">
-                <Host>jdbc:sqlserver://localhost\\SQLEXPRESS:1433;databaseName=Fight_Club_Chemnitz1;encrypt=false;</Host>
-                <Port>1434</Port>
+            <Database name="Database_Test" type="sqlserver" host="localhost\\SQLEXPRESS" port="1433" encrypt="false">
                 <Username>fight_user</Username>
                 <Password>fight_user</Password>
             </Database>

@@ -1,33 +1,37 @@
 package com.pilot.persistence;
 
 
-import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.context.ApplicationContext;
 import xml.DatabaseConfig;
+
+import javax.sql.DataSource;
+import java.sql.SQLException;
 
 public class Persistence {
 
-    private HikariDataSource dataSource;
+
+    private ApplicationContext context;
+
+    private DataSource dataSource;
+    private String databaseName;
     private String type;
     private String host;
     private int port;
     private String username;
     private String password;
 
-    public Persistence(DatabaseConfig database) {
+    public Persistence(DatabaseConfig database, ApplicationContext context) {
+        setDatabaseName(database.getName());
         setType(database.getType());
         setHost(database.getHost());
         setPort(database.getPort());
         setUsername(database.getUsername());
         setPassword(database.getPassword());
+        this.context = context;
     }
 
     public void initialize() {
-        dataSource = new HikariDataSource();
-        dataSource.setJdbcUrl(getHost());
-        dataSource.setUsername(getUsername());
-        dataSource.setPassword(getPassword());
-        dataSource.setDriverClassName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-        dataSource.setAutoCommit(true);
+        dataSource = context.getBean(PersistenceDataSource.class).getDataSource();
     }
 
     public boolean isConnected() {
@@ -38,12 +42,12 @@ public class Persistence {
         }
     }
 
-    public HikariDataSource getDataSource() {
+    public DataSource getDataSource() {
         return dataSource;
     }
 
-    public void close() {
-        if (dataSource != null) dataSource.close();
+    public void close() throws SQLException {
+        if (dataSource != null) dataSource.getConnection().close();
     }
 
     public String getType() {
@@ -55,6 +59,14 @@ public class Persistence {
             throw new RuntimeException("Database-Typ is missing");
         }
         this.type = type;
+    }
+
+    public String getDatabaseName() {
+        return databaseName;
+    }
+
+    public void setDatabaseName(String databaseName) {
+        this.databaseName = databaseName;
     }
 
     public String getHost() {
