@@ -33,8 +33,13 @@ public class QueryExecutor {
         return  new QueryExecutor();
     }
 
-    public Future<Integer> submitUpdate(String query) {
-        return executor.submit(new UpdateCallable(query, dataSource));
+    public Integer submitUpdate(String query) {
+        Future<Integer> resultSetFuture = executor.submit(new UpdateCallable(query, dataSource));
+        try {
+            return  resultSetFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public ResultSet submitSelect(String query) {

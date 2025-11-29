@@ -1,8 +1,8 @@
 package com.pilot.controller;
 
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
-import org.springframework.security.core.Authentication;
+//import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+//import org.springframework.security.config.annotation.web.configurers.FormLoginConfigurer;
+//import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -10,15 +10,15 @@ import org.springframework.web.bind.annotation.*;
 import java.awt.*;
 import java.util.List;
 
-@Controller
+//@Controller
 public class UILoginController {
 
-    @GetMapping("/login")
+    /*//@GetMapping("/login")
     public String login() {
         return "login";
     }
 
-    @GetMapping("/home")
+    //@GetMapping("/home")
     public String home(Model model, Authentication authentication) {
 
         String username = authentication.getName();
@@ -42,5 +42,5 @@ public class UILoginController {
     @GetMapping("/{path:^(?!css|js|images).*}")
     public String fallback() {
         return "error/404";
-    }
+    }*/
 }

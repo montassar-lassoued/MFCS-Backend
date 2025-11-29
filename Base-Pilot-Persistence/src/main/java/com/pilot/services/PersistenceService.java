@@ -107,10 +107,12 @@ public class PersistenceService implements PilotServices<ModuleConfig>{
                         while (scanner.hasNext()) {
                             String sql = scanner.next().trim();
                             if (!sql.isEmpty()) {
-                                String tableName = extractTableName(sql);
-                                if (tableExists(metaData, tableName)) {
-                                    System.out.println("Table " + tableName + " already exists, skipping...");
-                                    continue;
+                                if(sql.startsWith("CREATE")){
+                                    String tableName = extractTableName(sql);
+                                    if (tableExists(metaData, tableName)) {
+                                        System.out.println("Table " + tableName + " already exists, skipping...");
+                                        continue;
+                                    }
                                 }
                                 System.out.println(sql);
                                 stmt.execute(sql);

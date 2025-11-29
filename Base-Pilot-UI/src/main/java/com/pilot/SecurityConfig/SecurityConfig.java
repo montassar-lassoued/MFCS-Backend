@@ -5,6 +5,11 @@ import com.pilot.controller.UILoginController;
 import com.pilot.services.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.WebSecurityConfigurer;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -46,11 +51,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /*@Bean
+    @Bean
     public UserDetailsService userDetailsService(CustomUserDetailsService customService) {
         return customService;
-    }*/
-    @Bean
+    }
+    //@Bean
     public PasswordEncoder passwordEncoder() {
         //return new BCryptPasswordEncoder(); // oder NoOpPasswordEncoder für Test
         return NoOpPasswordEncoder.getInstance();

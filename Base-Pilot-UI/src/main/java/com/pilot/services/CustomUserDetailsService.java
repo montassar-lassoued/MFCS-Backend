@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-@Service
+//@Service
 public class CustomUserDetailsService implements UserDetailsService {
 
 
@@ -21,7 +21,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         QueryExecutor executor = QueryExecutor.Create();
         ResultSet rs = executor.submitSelect(
-                "SELECT * FROM APPUSERS WHERE USERNAME = '" + username + "'");
+                "SELECT" +
+                        "    APPUSERS.NAME," +
+                        "    APPUSERS.EMAIL," +
+                        "    ROLE.ROLE" +
+                        "FROM APPUSERS " +
+                        "JOIN ROLE  ON ROLE.id = APPUSERS.role_id " +
+                        "WHERE USERNAME = '" + username + "'");
 
         try {
             if (!rs.next()) {
@@ -30,11 +36,12 @@ public class CustomUserDetailsService implements UserDetailsService {
 
             String dbUsername = rs.getString("USERNAME");
             String dbPassword = rs.getString("PASSWORD");
-            String dbRole = rs.getString("ROLE"); // "ADMIN" oder "USER"
+            String Role = rs.getString("ROLE"); // "ADMIN" oder "USER"
+
 
             return User.withUsername(dbUsername)
                     .password(dbPassword)
-                    .roles(dbRole)  // Spring macht ROLE_ automatisch
+                    .roles(Role)  // Spring macht ROLE_ automatisch
                     .build();
 
         } catch (SQLException e) {
