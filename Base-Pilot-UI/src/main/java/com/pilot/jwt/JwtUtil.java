@@ -33,7 +33,7 @@ public class JwtUtil {
         return claimsTResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
+    public Claims extractAllClaims(String token) {
         Key key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         return Jwts.parser()
                 .setSigningKey(key)        // Secret oder Key

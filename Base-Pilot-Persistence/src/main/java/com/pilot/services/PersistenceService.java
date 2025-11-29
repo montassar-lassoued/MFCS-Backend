@@ -20,6 +20,8 @@ import java.util.regex.Pattern;
 @Component
 public class PersistenceService implements PilotServices<ModuleConfig>{
 
+    private static final Pattern CONSTRAINT_PATTERN =
+            Pattern.compile("CONSTRAINT\\s+\\[?(\\w+)\\]?\\s+", Pattern.CASE_INSENSITIVE);
     HashMap<String,Persistence> _persistences = new HashMap<>();
     private boolean running = false;
     private ApplicationContext context;
@@ -113,6 +115,14 @@ public class PersistenceService implements PilotServices<ModuleConfig>{
                                         System.out.println("Table " + tableName + " already exists, skipping...");
                                         continue;
                                     }
+                                } else if (isConstraintStatement(sql)) {
+                                    String constraintName = extractConstraintName(sql);
+                                    if(constraintName == null){
+                                        continue;
+                                    }
+                                    if(constraintExists(conn, constraintName)){
+                                        continue;
+                                    }
                                 }
                                 System.out.println(sql);
                                 stmt.execute(sql);
@@ -128,6 +138,43 @@ public class PersistenceService implements PilotServices<ModuleConfig>{
             e.printStackTrace();
         }
     }
+
+    /**
+     * Prüft, ob ein SQL-Statement ein Constraint-Statement ist
+     */
+    public static boolean isConstraintStatement(String sql) {
+        if (sql == null) return false;
+        return sql.toLowerCase().contains("constraint");
+    }
+
+    public static String extractConstraintName(String sql) {
+        Matcher matcher = CONSTRAINT_PATTERN.matcher(sql);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null; // konnte nicht gefunden werden
+    }
+
+    /**
+     * Prüft, ob ein Constraint in der DB existiert
+     */
+    public static boolean constraintExists(Connection conn, String constraintName) throws SQLException {
+        if (constraintName == null) return false;
+
+        String sql = "SELECT 1 FROM sys.foreign_keys WHERE name = ? " +
+                "UNION ALL " +
+                "SELECT 1 FROM sys.key_constraints WHERE name = ?";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, constraintName);
+            ps.setString(2, constraintName);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     private boolean tableExists(DatabaseMetaData metaData, String tableName) throws SQLException {
         try (ResultSet rs = metaData.getTables(null, null, tableName.toUpperCase(), new String[]{"TABLE"})) {
             return rs.next();

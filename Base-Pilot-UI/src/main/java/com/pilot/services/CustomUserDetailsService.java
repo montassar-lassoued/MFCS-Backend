@@ -1,6 +1,8 @@
 package com.pilot.services;
 
 import com.pilot.queryExec.QueryExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,13 +14,16 @@ import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-//@Service
+@Service
 public class CustomUserDetailsService implements UserDetailsService {
 
+
+    private static final Logger log = LoggerFactory.getLogger(CustomUserDetailsService.class);
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
+        log.info("inside loadUserByUsername{}",username);
         QueryExecutor executor = QueryExecutor.Create();
         ResultSet rs = executor.submitSelect(
                 "SELECT" +
