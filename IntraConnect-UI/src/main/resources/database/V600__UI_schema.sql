@@ -1,0 +1,25 @@
+
+
+CREATE TABLE AppUsers (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    username VARCHAR(255),
+    password VARCHAR(255),
+    email VARCHAR(255),
+    state VARCHAR(255) NULL,
+    ROLE_ID BIGINT
+);
+CREATE TABLE ROLE (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    role VARCHAR(5),
+    description VARCHAR(255)
+);
+
+
+
+
+
+
+-- CONSTRAINT--
+ALTER TABLE [dbo].[AppUsers]  WITH CHECK ADD  CONSTRAINT [FK_AppUsers] FOREIGN KEY([ROLE_ID])
+REFERENCES [dbo].[ROLE] ([ID]);
+ALTER TABLE [dbo].[AppUsers] CHECK CONSTRAINT [FK_AppUsers];

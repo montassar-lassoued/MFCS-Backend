@@ -8,11 +8,11 @@
 		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-    <groupId>com.pilot</groupId>
-	<artifactId>Base_Pilot</artifactId>
+    <groupId>com.IntraConnect</groupId>
+	<artifactId>IntraConnect</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Base_Pilot</name>
+    <name>IntraConnect</name>
 	<description>Project with Spring Boot</description>
 	<url/>
 	<licenses>
@@ -22,12 +22,15 @@
 		<developer/>
 	</developers>
     <modules>
-        <module>Base-Pilot-Persistence</module>
-        <module>Base-Pilot-Initializer</module>
-        <module>Base-Pilot-TCP</module>
-        <module>Base-Pilot-UDP</module>
-        <module>Base-Pilot-Common</module>
-        <module>Base-Pilot-UI</module>
+        <module>IntraConnect-Persistence</module>
+        <module>IntraConnect-Initializer</module>
+        <module>IntraConnect-TCP</module>
+        <module>IntraConnect-UDP</module>
+        <module>IntraConnect-Common</module>
+        <module>IntraConnect-UI</module>
+        <module>IntraConnect-StockMovement</module>
+        <module>IntraConnect-InventoryManagement</module>
+        <module>IntraConnect-Kunde</module>
     </modules>
     <scm>
 		<connection/>
@@ -48,10 +51,6 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.boot</groupId>-->
-<!--            <artifactId>spring-boot-starter-thymeleaf</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>com.itextpdf</groupId>
             <artifactId>itextpdf</artifactId>
@@ -84,14 +83,25 @@
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt</artifactId>
+            <artifactId>jjwt-api</artifactId>
             <version>0.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.13.0</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId> <!-- oder jjwt-gson -->
+            <version>0.13.0</version>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
 <!--            <version>2.5.6</version>-->
         </dependency>
-
     </dependencies>
 </project>

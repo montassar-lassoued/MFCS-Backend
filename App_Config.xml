@@ -1,51 +1,101 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SystemConfig>
-    <Modules>
-        <Module name="Persistence" enabled="true">
-            <Database name="Database_Test" type="sqlserver" host="localhost\\SQLEXPRESS" port="1433" encrypt="false">
-                <Username>fight_user</Username>
-                <Password>fight_user</Password>
-            </Database>
+    <Processors>
+        <Processor name="Controller_tcp_Processor" class="com.IntraConnect.processors.Processor_tcp_Class_1"/>
+    </Processors>
+	<Modules>
+		<Module name="Persistence" enabled="true">
+			<Database name="Database_Test" type="sqlserver" host="localhost\\SQLEXPRESS" port="1433" encrypt="false" main="true">
+				<Username>fight_user</Username>
+				<Password>fight_user</Password>
+			</Database>
+		</Module>
+		<Module name="TCP" enabled="true">
+			<Controller name="Controller_1" active="false" prefix=" " suffix="">
+				<Connection>
+					<Host>localhost</Host>
+					<Port>1200</Port>
+					<Timeout>3000</Timeout>
+				</Connection>
+                <Processor name="Controller_tcp_Processor" />
+			</Controller>
+			<Controller name="Controller_2" active="true" prefix="AAA" suffix="ZZZ">
+				<Connection>
+					<Host>0.0.0.0</Host>
+					<Port>1201</Port>
+					<Timeout>3000</Timeout>
+				</Connection>
+                <Processor name="Controller_tcp_Processor" />
+			</Controller>
+			<Controller name="Controller_3" active="false" prefix=" " suffix="">
+				<Connection>
+					<Host>192.168.2.222</Host>
+					<Port>1202</Port>
+					<Timeout>3000</Timeout>
+				</Connection>
+                <Processor name="Controller_tcp_Processor" />
+			</Controller>
+			<Controller name="Controller_4" active="true" prefix=" " suffix="">
+				<Connection>
+					<Host>0.0.0.0</Host>
+					<Port>1203</Port>
+					<Timeout>3000</Timeout>
+				</Connection>
+			</Controller>
+		</Module>
+		<Module name="UDP" enabled="true">
+			<Controller name="Controller_5" active="true" prefix=" " suffix="">
+				<Connection>
+					<Host>0.0.0.0</Host>
+					<Port>2100</Port>
+					<Timeout>3000</Timeout>
+				</Connection>
+			</Controller>
+		</Module>
+		<Module name="UI" enabled="true">
+			<Navbar>
+				<Items>
+					<Item id="home" label="Home" navigateTo="home" color ="#4ECDC4" order = "1" />
+					<Item id="controller" label="Controller" navigateTo="controller" color ="#4ECDC4" order = "2" />
+					<Item id="users" label="Users" navigateTo="users" color ="#4ECDC4" order = "4" />
+					<Group id="journal" label="Journal" color ="#4ECDC4" order = "3">
+						<Item id="transfer-in" label="Transfer-In" navigateTo="transfer-In" color ="#4ECDC4" order = "1" />
+						<Item id="transfer-out" label="Transfer-Out" navigateTo="transfer-Out" color ="#4ECDC4" order = "2" />
+                        <Item id="Transfer-Out-Card" label="Transfer-Out-Card" navigateTo="transfer-Out" color ="#4ECDC4" order = "3" />
+					</Group>
+					
+				</Items>
+			</Navbar>
+		</Module>
+<!--        <Module name="AMQP" enabled="true">-->
+<!--        </Module>-->
+<!--        <Module name="SAP" enabled="true">-->
+<!--        </Module>-->
+<!--        <Module name="NightJob" enabled="true">-->
+<!--        </Module>-->
+        <Module name="StockMovement" enabled="true">
+            <Nodes>
+                <Node point="A" controller="SPS1">
+                    <Ziel point="B" direction="L" cost="1"/>
+                    <Ziel point="D" direction="R" cost="1"/>
+                </Node>
+
+                <Node point="B" controller="SPS1">
+                    <Ziel point="C" direction="G" cost="1"/>
+                </Node>
+
+                <Node point="C" controller="SPS2">
+                    <Ziel point="Z" direction="L" cost="1"/>
+                </Node>
+
+                <Node point="D" controller="SPS2">
+                    <Ziel point="Z" direction="R" cost="1"/>
+                </Node>
+
+                <Node point="Z" controller="SPS2"/>
+            </Nodes>
         </Module>
-        <Module name="TCP" enabled="true">
-            <Controller name="Controller_1" active="false" prefix=" " suffix="" >
-                <Connection>
-                    <Host>localhost</Host>
-                    <Port>1200</Port>
-                    <Timeout>3000</Timeout>
-                </Connection>
-            </Controller>
-            <Controller name="Controller_2" active="true" prefix="AAA" suffix="ZZZ">
-                <Connection>
-                    <Host>0.0.0.0</Host>
-                    <Port>1201</Port>
-                    <Timeout>3000</Timeout>
-                </Connection>
-            </Controller>
-            <Controller name="Controller_3" active="false" prefix=" " suffix="">
-                <Connection>
-                    <Host>192.168.2.222</Host>
-                    <Port>1202</Port>
-                    <Timeout>3000</Timeout>
-                </Connection>
-            </Controller>
-            <Controller name="Controller_4" active="true" prefix=" " suffix="">
-                <Connection>
-                    <Host>0.0.0.0</Host>
-                    <Port>1203</Port>
-                    <Timeout>3000</Timeout>
-                </Connection>
-            </Controller>
+        <Module name="InventoryManagement" enabled="true">
         </Module>
-        <Module name="UDP" enabled="true">
-            <Controller name="Controller_5" active="true" prefix=" " suffix="">
-                <Connection>
-                    <Host>0.0.0.0</Host>
-                    <Port>2100</Port>
-                    <Timeout>3000</Timeout>
-                </Connection>
-            </Controller>
-        </Module>
-    </Modules>
-    <!--<Logging level="INFO" file="logs/app.log" />-->
+	</Modules>
 </SystemConfig>

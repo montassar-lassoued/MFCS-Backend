@@ -1,0 +1,58 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 250px auto;
+    grid-template-rows: 70px auto;
+    height: 100vh;
+}
+
+/* Oberer Titel */
+.top-title {
+    grid-column: 1 / span 2;
+    background: #ddd;
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    padding-top: 15px;
+    border-bottom: 2px solid #ccc;
+}
+
+/* Linkes Menü */
+.side-menu {
+    background: #ececec;
+    padding: 1px;
+    border-right: 2px solid #ccc;
+}
+
+/* Menü-Item als Trapez */
+.menu-item {
+    padding: 12px;
+    margin-bottom: 3px;
+    clip-path: polygon(0% 0%, 93% 0%, 100% 100%, 0% 100%);
+    /* Trapez: obere Kante kleiner als untere */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.menu-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.menu-item a {
+    text-decoration: none;
+    color: #444;
+    font-weight: bold;
+    display: block;
+    text-align: center;
+}
+
+/* Inhaltsbereich */
+.content {
+    padding: 30px;
+}
