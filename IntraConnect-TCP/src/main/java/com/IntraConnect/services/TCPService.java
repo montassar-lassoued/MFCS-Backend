@@ -1,6 +1,6 @@
 package com.IntraConnect.services;
 
-import com.IntraConnect.scheduler.ControllerMessageScheduler;
+import com.IntraConnect.messageEngine.ControllerRegistry;
 import com.IntraConnect.async.client.AsyncClientEngine;
 import com.IntraConnect.async.server.AsyncServerEngine;
 import com.IntraConnect.command.handlerReg.Register;
@@ -8,6 +8,7 @@ import com.IntraConnect.queryExec.transaction.Transaction;
 import com.IntraConnect.controller.Controller;
 import com.IntraConnect.helper.Console;
 import com.IntraConnect.intf.PilotApplicationServices;
+import com.IntraConnect.tcpController.TcpController;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +27,19 @@ import java.util.List;
 public class TCPService extends PilotApplicationServices {
 
     List<Controller> _controllers = new ArrayList<>();
-	private ControllerMessageScheduler controllerMessageScheduler;
+	private final ControllerRegistry controllerRegistry;
 	private final AsyncServerEngine serverEngine;
 	private final AsyncClientEngine clientEngine;
 	boolean enabled;
 	private static final Logger log = LoggerFactory.getLogger(TCPService.class);
 	
-    public TCPService(Register register, AsyncServerEngine serverEngine, AsyncClientEngine clientEngine) {
+    public TCPService(Register register,
+					  ControllerRegistry controllerRegistry,
+					  AsyncServerEngine serverEngine,
+					  AsyncClientEngine clientEngine) {
 		super(register);
 		
+		this.controllerRegistry = controllerRegistry;
 		this.serverEngine = serverEngine;
 		this.clientEngine = clientEngine;
 	}
@@ -68,7 +73,7 @@ public class TCPService extends PilotApplicationServices {
 				ConnectionConfig connectionConfig = new ConnectionConfig(host, port, timeout);
 				ControllerConfig controllerConfig = new ControllerConfig(name, active, prefix, suffix, connectionConfig);
 				
-				Controller _controller = new Controller(controllerConfig);
+				TcpController _controller = new TcpController(controllerConfig);
 				_controllers.add(_controller);
 			}
 		}
@@ -95,18 +100,22 @@ public class TCPService extends PilotApplicationServices {
                 }
             }
         }
+		//Controller registrieren
+		controllerRegistry.register(_controllers);
         // Alles ok, wir können nun die Controller in die datenbank anlegen
         InitializeDatabaseTableController();
     }
 
     private void InitializeDatabaseTableController() {
         try(Transaction transaction = Transaction.create()){
-            StringBuilder query = new StringBuilder();
-            transaction.update(query.toString());
+			
             for (Controller controller : _controllers) {
-                query.append("INSERT INTO CONTROLLER (NAME, DESCRIPTION, CONNECTED) VALUES (" + "'").append(controller.getName()).append("','Host->").append(controller.getHost()).append("/ PORT->").append(controller.getPort()).append("','").append(false).append("');");
+                String sql = "INSERT INTO CONTROLLER (NAME, DESCRIPTION, CONNECTED) " +
+						"VALUES (" + "'"+controller.getName()+"'," +
+						"'Host->"+controller.getHost()+"/ PORT->"+controller.getPort()+"','"+false+"');";
+				transaction.insert(sql);
             }
-            transaction.insert(query.toString());
+            
             transaction.commit();
 
         }catch (Exception e){
@@ -141,8 +150,4 @@ public class TCPService extends PilotApplicationServices {
 			return;
 		}
     }
-	
-	public List<Controller> getControllers() {
-		return _controllers;
-	}
 }

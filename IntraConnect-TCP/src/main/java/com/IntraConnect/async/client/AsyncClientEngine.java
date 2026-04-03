@@ -1,7 +1,8 @@
 package com.IntraConnect.async.client;
 
 import com.IntraConnect.controller.Controller;
-import com.IntraConnect.services.content.TCPControllerContentService;
+import com.IntraConnect.messageEngine.AbstractMessageEngine;
+import com.IntraConnect.tcpController.TcpController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,13 +21,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class AsyncClientEngine {
+public class AsyncClientEngine extends AbstractMessageEngine {
 	
 	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 	private static final Logger log = LoggerFactory.getLogger(AsyncClientEngine.class);
 	private final Map<String, TcpClientSession> clientSessions = new ConcurrentHashMap<>();
-	@Autowired
-	private TCPControllerContentService controllerContentService ;
 	
 	public AsyncClientEngine() {
 
@@ -39,8 +38,6 @@ public class AsyncClientEngine {
 	/** Connect zum Server */
 	public void connectWithRetry(Controller controller) {
 		try {
-			
-			
 			AsynchronousSocketChannel channel = AsynchronousSocketChannel.open();
 			channel.connect(
 					new InetSocketAddress(controller.getHost(),
@@ -88,7 +85,10 @@ public class AsyncClientEngine {
 				buf.get(data);
 				buf.clear();
 				log.info("Received from server: {}", new String(data));
-				handleMessage(session.getController(), data);
+				
+				/* Handelt eingehende Nachrichten*/
+				handleIncomingData(session.getController(), data);
+				
 				session.getChannel().read(buf, buf, this);
 			}
 			
@@ -99,45 +99,23 @@ public class AsyncClientEngine {
 		});
 	}
 	
-	/** Verarbeitung eingehender Nachrichten*/
-	private void handleMessage(Controller controller, byte[] data) {
-		if (controller != null) {
-			controllerContentService.startHandleContent(controller, data);
-		}
-	}
 	
-	/** Scheduler-Aufruf */
-	public boolean sendMessage(String controllerName, byte[] content) {
-		TcpClientSession session = clientSessions.get(controllerName);
+	@Override
+	public boolean sendMessage(Controller controller, byte[] content) {
+		TcpClientSession session = clientSessions.get(controller.getName());
 		if (session == null) return false;
 		if (content == null) return false;
 		
-		byte[] data = getDataSet(session.getController(), content);
-		byte[] framed = frameMessage(data);
+		byte[] data = prepareData(controller, content); // Aus Basisklasse
+		byte[] framed = addLengthPrefix(data);         // Aus Basisklasse
 		session.send(framed);
 		
 		return true;
 	}
 	
-	private byte[] getDataSet(Controller controller, byte[]content){
-		byte[] prefix = controller.getPrefix().getBytes(StandardCharsets.UTF_8);
-		byte[] suffix = controller.getSuffix().getBytes(StandardCharsets.UTF_8);
-		
-		ByteArrayOutputStream out = new ByteArrayOutputStream(
-				prefix.length + content.length + suffix.length
-		);
-		out.writeBytes(prefix);
-		out.writeBytes(content);
-		out.writeBytes(suffix);
-		
-		return out.toByteArray();
-	}
-	
-	private byte[] frameMessage(byte[] data) {
-		var buf = java.nio.ByteBuffer.allocate(4 + data.length);
-		buf.putInt(data.length);
-		buf.put(data);
-		buf.flip();
-		return buf.array();
+	@Override
+	public boolean supports(Controller controller) {
+		// Logik: Ist ein Client-Controller UND nutzt TCP
+		return controller.isActive() && controller instanceof TcpController;
 	}
 }

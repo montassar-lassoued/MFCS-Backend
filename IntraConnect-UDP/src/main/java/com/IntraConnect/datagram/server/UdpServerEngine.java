@@ -1,6 +1,10 @@
 package com.IntraConnect.datagram.server;
 
 import com.IntraConnect.controller.Controller;
+import com.IntraConnect.controllerContent.ControllerContentService;
+import com.IntraConnect.intf.ContentServices;
+import com.IntraConnect.messageEngine.AbstractMessageEngine;
+import com.IntraConnect.udpController.UdpController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -16,110 +20,96 @@ import java.nio.channels.Selector;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 @Component
-public class UdpServerEngine {
+public class UdpServerEngine extends AbstractMessageEngine {
 	
 	private static final Logger log = LoggerFactory.getLogger(UdpServerEngine.class);
-	
 	private Selector selector;
-	private ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+	private final ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
 	
-	// ControllerName -> DatagramChannel + Port
+	// Name -> Channel Mapping für das Senden
 	private final Map<String, DatagramChannel> controllerChannels = new HashMap<>();
 	
+	public UdpServerEngine() {
+		try {
+			this.selector = Selector.open();
+			startServerThread(); // Startet den Loop im Hintergrund
+		} catch (IOException e) {
+			log.error("UDP Selector konnte nicht geöffnet werden", e);
+		}
+	}
+	
 	public void registerController(Controller controller) throws IOException {
-		if (selector == null) selector = Selector.open();
-		
 		DatagramChannel channel = DatagramChannel.open();
 		channel.bind(new InetSocketAddress(controller.getPort()));
 		channel.configureBlocking(false);
-		channel.register(selector, SelectionKey.OP_READ, controller.getPort());
+		
+		// WICHTIG: Wir hängen das Controller-Objekt als Attachment an den Key!
+		channel.register(selector, SelectionKey.OP_READ, controller);
 		
 		controllerChannels.put(controller.getName(), channel);
-		
-		log.info("UDP Controller '{}' listening on port {}", controller.getName(), controller.getPort());
+		log.info("UDP Server Controller '{}' listening on port {}", controller.getName(), controller.getPort());
 	}
 	
-	/** Hauptloop, Non-Blocking */
-	public void serverLoop() {
-		try {
-			while (true) {
-				selector.select(); // block until at least one channel is ready
-				Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
-				
-				while (keys.hasNext()) {
-					SelectionKey key = keys.next();
-					keys.remove();
+	private void startServerThread() {
+		Thread serverThread = new Thread(() -> {
+			try {
+				while (!Thread.currentThread().isInterrupted()) {
+					if (selector.select() == 0) continue;
 					
-					if (key.isReadable()) {
-						DatagramChannel channel = (DatagramChannel) key.channel();
-						buffer.clear();
+					Iterator<SelectionKey> keys = selector.selectedKeys().iterator();
+					while (keys.hasNext()) {
+						SelectionKey key = keys.next();
+						keys.remove();
 						
-						SocketAddress client = channel.receive(buffer);
-						if (client != null) {
-							buffer.flip();
-							byte[] data = new byte[buffer.limit()];
-							buffer.get(data);
+						if (key.isReadable()) {
+							DatagramChannel channel = (DatagramChannel) key.channel();
+							// Hier holen wir den Controller aus dem Attachment zurück!
+							Controller controller = (Controller) key.attachment();
 							
-							handleMessage(client, data, channel);
+							buffer.clear();
+							SocketAddress clientAddr = channel.receive(buffer);
+							if (clientAddr != null) {
+								buffer.flip();
+								byte[] data = new byte[buffer.limit()];
+								buffer.get(data);
+								
+								// Aufruf der zentralen Methode in AbstractMessageEngine
+								handleIncomingData(controller, data);
+							}
 						}
 					}
 				}
+			} catch (IOException e) {
+				log.error("Fehler im UDP Server Loop", e);
 			}
-		} catch (IOException e) {
-			log.error("UDP server loop error", e);
-		}
+		}, "UDP-Server-Receiver");
+		serverThread.setDaemon(true);
+		serverThread.start();
 	}
 	
-	/** Nachrichtenverarbeitung */
-	private void handleMessage(SocketAddress client, byte[] data, DatagramChannel channel) {
-		String msg = new String(data);
-		log.info("Received from {}: {}", client, msg);
-		
-		// Optional: Echo zurück
-		try {
-			channel.send(ByteBuffer.wrap(("ACK: " + msg).getBytes()), client);
-		} catch (IOException e) {
-			log.error("Failed to send ACK", e);
-		}
-	}
-	
-	/** Zentraler Send-Pfad für Scheduler */
+	@Override
 	public boolean sendMessage(Controller controller, byte[] content) {
 		DatagramChannel channel = controllerChannels.get(controller.getName());
-		if (channel == null) {
-			log.warn("Controller {} not registered", controller);
-			return false;
-		}
-		InetSocketAddress target =
-				new InetSocketAddress(controller.getHost(), controller.getPort());
+		if (channel == null) return false;
+		
 		try {
-			
-			byte[] data = getDataSet(controller, content);
-			
-			ByteBuffer buffer = ByteBuffer.wrap(data);
-			int sent = channel.send(buffer, target);
-			
+			byte[] data = prepareData(controller, content);
+			InetSocketAddress target = new InetSocketAddress(controller.getHost(), controller.getPort());
+			int sent = channel.send(ByteBuffer.wrap(data), target);
 			return sent == data.length;
-			
 		} catch (IOException e) {
-			log.error("Failed to send message to {}: {}", controller, e.getMessage());
+			log.error("UDP Send Fehler für {}", controller.getName(), e);
 			return false;
 		}
 	}
-	private byte[] getDataSet(Controller controller, byte[]content){
-		byte[] prefix = controller.getPrefix().getBytes(StandardCharsets.UTF_8);
-		byte[] suffix = controller.getSuffix().getBytes(StandardCharsets.UTF_8);
-		
-		ByteArrayOutputStream out = new ByteArrayOutputStream(
-				prefix.length + content.length + suffix.length
-		);
-		out.writeBytes(prefix);
-		out.writeBytes(content);
-		out.writeBytes(suffix);
-		
-		return out.toByteArray();
+	
+	@Override
+	public boolean supports(Controller controller) {
+		return !controller.isActive() && controller instanceof UdpController;
 	}
 }
+

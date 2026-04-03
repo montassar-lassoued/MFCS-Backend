@@ -3,10 +3,12 @@ package com.IntraConnect.services;
 import com.IntraConnect.datagram.server.UdpServerEngine;
 import com.IntraConnect.datagram.client.UdpClientEngine;
 import com.IntraConnect.command.handlerReg.Register;
+import com.IntraConnect.messageEngine.ControllerRegistry;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import com.IntraConnect.controller.Controller;
 import com.IntraConnect.helper.Console;
 import com.IntraConnect.intf.PilotApplicationServices;
+import com.IntraConnect.udpController.UdpController;
 import org.jdom2.Element;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -25,14 +27,15 @@ public class UDPService extends PilotApplicationServices {
 	List<Controller> _controllers = new ArrayList<>();
 	private final UdpServerEngine udpServerEngine;
 	private final UdpClientEngine clientEngine;
-	
+	private final ControllerRegistry controllerRegistry;
 	boolean enabled;
 	
-	public UDPService(Register register, UdpServerEngine udpServerEngine, UdpClientEngine clientEngine) {
+	public UDPService(Register register, UdpServerEngine udpServerEngine, UdpClientEngine clientEngine, ControllerRegistry controllerRegistry) {
 		super(register);
 		
 		this.udpServerEngine = udpServerEngine;
 		this.clientEngine = clientEngine;
+		this.controllerRegistry = controllerRegistry;
 	}
 	
 	@Override
@@ -64,7 +67,7 @@ public class UDPService extends PilotApplicationServices {
 				ConnectionConfig connectionConfig = new ConnectionConfig(host, port, timeout);
 				ControllerConfig controllerConfig = new ControllerConfig(name, active, prefix, suffix, connectionConfig);
 				
-				Controller _controller = new Controller(controllerConfig);
+				UdpController _controller = new UdpController(controllerConfig);
 				_controllers.add(_controller);
 			}
 		}
@@ -91,7 +94,9 @@ public class UDPService extends PilotApplicationServices {
 				}
 			}
 		}
-		
+		//Controller registrieren
+		controllerRegistry.register(_controllers);
+		// in die DB speichern
 		InitializeDatabaseTableController();
 	}
 	
@@ -134,8 +139,4 @@ public class UDPService extends PilotApplicationServices {
 			return;
 		}
     }
-	
-	public List<Controller> getControllers(){
-		return _controllers;
-	}
 }

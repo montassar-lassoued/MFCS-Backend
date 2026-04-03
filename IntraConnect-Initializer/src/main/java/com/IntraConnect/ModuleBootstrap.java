@@ -113,15 +113,15 @@ public class ModuleBootstrap {
 				continue;
 			}
 			
-//			PilotServices service = registry.get(name.toLowerCase());
-//			if (service == null) {
-//				System.out.println(Thread.currentThread().getName());
-//				Console.error.println("FATAL: No PilotService registered for: " + name);
-//				System.exit(1);
-//			}
-//
-//			result.add(service);
-//			moduleConfigMap.put(service, moduleElement);
+			PilotServices service = registry.get(name.toLowerCase());
+			if (service == null) {
+				System.out.println(Thread.currentThread().getName());
+				Console.error.println("FATAL: No PilotService registered for: " + name);
+				System.exit(1);
+			}
+
+			result.add(service);
+			moduleConfigMap.put(service, moduleElement);
 		}
 		
 		return result;

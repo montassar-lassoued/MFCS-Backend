@@ -46,11 +46,6 @@ public class ProcessorFactory {
 			String className = p.getAttributeValue("class");
 			
 			try {
-				ClassLoader cl = Thread.currentThread().getContextClassLoader();
-				java.util.Enumeration<java.net.URL> resources = cl.getResources("com/IntraConnect/processors/Processor_tcp_Class_1.class");
-				while (resources.hasMoreElements()) {
-					System.out.println(resources.nextElement());
-				}
 				Class<?> clazz = Class.forName(className);
 
 				Processor instance =

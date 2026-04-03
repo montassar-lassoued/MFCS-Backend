@@ -1,10 +1,9 @@
 package com.IntraConnect.intf;
 
+import com.IntraConnect.controller.Controller;
+
 import java.util.List;
 
 public interface ContentServices {
-    List<byte[]> extractContents(byte[] data);
-    byte[] handleContent(byte[] data);
-    void handleMessage(String message);
-	boolean skipMessage(String message);
+	void handleIncomingData(Controller _controller, byte[] data);
 }

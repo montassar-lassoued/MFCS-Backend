@@ -1,7 +1,8 @@
 package com.IntraConnect.async.server;
 
 import com.IntraConnect.controller.Controller;
-import com.IntraConnect.services.content.TCPControllerContentService;
+import com.IntraConnect.messageEngine.AbstractMessageEngine;
+import com.IntraConnect.tcpController.TcpController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +22,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
 @Component
-public class AsyncServerEngine {
+public class AsyncServerEngine extends AbstractMessageEngine {
 	
 	private static final Logger log = LoggerFactory.getLogger(AsyncServerEngine.class);
 	private final Map<String, List<TcpSession>> controllerSessions = new ConcurrentHashMap<>();
 	private final java.nio.channels.AsynchronousChannelGroup channelGroup;
-	@Autowired
-	private TCPControllerContentService controllerContentService ;
 	
 	public AsyncServerEngine() throws IOException {
 		this.channelGroup = java.nio.channels.AsynchronousChannelGroup.withFixedThreadPool(
@@ -83,7 +82,10 @@ public class AsyncServerEngine {
 				buf.clear();
 				
 				log.info("Received from {}: {}", session.getController().getName(), new String(data));
-				handleMessage(session.getController(), data);
+				
+				/* Handelt eingehende Nachrichten*/
+				handleIncomingData(session.getController(), data);
+				
 				client.read(buf, buf, this);
 			}
 			
@@ -110,51 +112,23 @@ public class AsyncServerEngine {
 		controllerSessions.getOrDefault(session.getController().getName(), new ArrayList<>()).remove(session);
 	}
 	
-	/** Verarbeitung eingehender Nachrichten*/
-	private void handleMessage(Controller controller, byte[] data) {
-		if (controller != null) {
-			controllerContentService.startHandleContent(controller, data);
-		}
+	@Override
+	public boolean supports(Controller controller) {
+		// Logik: Ist ein Server-Controller UND nutzt TCP
+		return !controller.isActive() && controller instanceof TcpController;
 	}
 	
-	/** SendMessage -> Daten aus Tabelle, ControllerName -> Session finden */
-	public boolean sendMessage(String controllerName, byte[] content) {
-		if (content == null) return false;
+	@Override
+	public boolean sendMessage(Controller controller, byte[] content) {
+		List<TcpSession> sessions = controllerSessions.get(controller.getName());
+		if (sessions == null || sessions.isEmpty()) return false;
 		
-		List<TcpSession> sessions = controllerSessions.get(controllerName);
-		if (sessions == null || sessions.isEmpty()) {
-			log.warn("Keine aktive Session für Controller: {}", controllerName);
-			return false;
-		}
+		byte[] data = prepareData(controller, content); // Aus Basisklasse
+		byte[] framed = addLengthPrefix(data);         // Aus Basisklasse
 		
 		for (TcpSession session : sessions) {
-			byte[] data = getDataSet(session.getController(), content);
-			session.send(frameMessage(data));
-			log.info("Send to {}: {}", controllerName,new String(content, StandardCharsets.UTF_8));
+			session.send(framed);
 		}
 		return true;
-	}
-	
-	private byte[] getDataSet(Controller controller, byte[]content){
-		byte[] prefix = controller.getPrefix().getBytes(StandardCharsets.UTF_8);
-		byte[] suffix = controller.getSuffix().getBytes(StandardCharsets.UTF_8);
-		
-		ByteArrayOutputStream out = new ByteArrayOutputStream(
-				prefix.length + content.length + suffix.length
-		);
-		out.writeBytes(prefix);
-		out.writeBytes(content);
-		out.writeBytes(suffix);
-		
-		return out.toByteArray();
-	}
-	
-	/** Framing: 4 Byte Length-Prefix */
-	private byte[] frameMessage(byte[] data) {
-		ByteBuffer buf = ByteBuffer.allocate(4 + data.length);
-		buf.putInt(data.length);
-		buf.put(data);
-		buf.flip();
-		return buf.array();
 	}
 }

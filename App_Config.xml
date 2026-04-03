@@ -41,6 +41,7 @@
 					<Port>1203</Port>
 					<Timeout>3000</Timeout>
 				</Connection>
+                <Processor name="Controller_tcp_Processor" />
 			</Controller>
 		</Module>
 		<Module name="UDP" enabled="true">
@@ -50,6 +51,7 @@
 					<Port>2100</Port>
 					<Timeout>3000</Timeout>
 				</Connection>
+                <Processor name="Controller_tcp_Processor" />
 			</Controller>
 		</Module>
 		<Module name="UI" enabled="true">

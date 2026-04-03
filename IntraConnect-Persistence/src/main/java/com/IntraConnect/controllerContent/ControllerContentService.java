@@ -1,18 +1,25 @@
-package com.IntraConnect.services;
+package com.IntraConnect.controllerContent;
 
+import com.IntraConnect._enum.Transfer;
 import com.IntraConnect.controller.Controller;
 import com.IntraConnect.intf.ContentServices;
+import com.IntraConnect.queryExec.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ControllerContentService implements ContentServices {
+public abstract class ControllerContentService implements ContentServices {
+	
+	private static final Logger log = LoggerFactory.getLogger(ControllerContentService.class);
+	public Controller controller;
 
-    public Controller controller;
-
-    public void startHandleContent(Controller _controller, byte[] data){
+	@Override
+    public void handleIncomingData(Controller _controller, byte[] data){
         // die Schnittstelle
         controller =_controller;
         // die Nachricht (kann auch mehrere Nachrichten sein inkl. Prefix und Suffix)
@@ -26,27 +33,41 @@ public class ControllerContentService implements ContentServices {
         
         }
     }
-    @Override
-    public List<byte[]> extractContents(byte[] data) {
+    
+    protected List<byte[]> extractContents(byte[] data) {
         return extract(data);
     }
 
-    @Override
-    public byte[] handleContent(byte[] data) {
+    
+	protected byte[] handleContent(byte[] data) {
         return data;
     }
-
-    @Override
-    public void handleMessage(String message) {
-
+	
+	
+	protected void handleMessage(String message) {
+		String query = "INSERT INTO TRANSFER_IN " +
+				"(CONTROLLER_ID,_DATE, CONTENT, PROCESSED) " +
+				"VALUES " +
+				"((SELECT ID FROM CONTROLLER WHERE NAME ='"+controller.getName()+"'),'" +
+				LocalDate.now() +"'," +
+				Arrays.toString(message.getBytes(StandardCharsets.UTF_8)) +"," +
+				Transfer.NEW +")";
+		
+		try(Transaction transaction = Transaction.create()){
+			transaction.insert(query);
+			transaction.commit();
+			
+		} catch (Exception e){
+			log.error(e.getMessage());
+		}
     }
 	
-	@Override
-	public boolean skipMessage(String message) {
+	
+	protected boolean skipMessage(String message) {
 		return false;
 	}
 	
-	private List<byte[]> extract(byte[] data){
+	protected List<byte[]> extract(byte[] data){
         // leer?
         if(data.length < 1) return null;
 

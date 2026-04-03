@@ -1,7 +1,9 @@
 package com.IntraConnect.datagram.client;
 
+import com.IntraConnect.messageEngine.AbstractMessageEngine;
 import com.IntraConnect.services.content.UDPControllerContentService;
 import com.IntraConnect.controller.Controller;
+import com.IntraConnect.udpController.UdpController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,22 +26,20 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
-public class UdpClientEngine {
+public class UdpClientEngine extends AbstractMessageEngine {
 	
 	private static final Logger log = LoggerFactory.getLogger(UdpClientEngine.class);
 	private final DatagramChannel channel;
 	private final ExecutorService pool;
 	private final Map<SocketAddress, Controller> servers = new ConcurrentHashMap<>();
 	private final ByteBuffer buffer = ByteBuffer.allocate(1024);
-	@Autowired
-	private UDPControllerContentService controllerContentService ;
 	
 	public UdpClientEngine() throws Exception {
 		channel = DatagramChannel.open();
 		channel.configureBlocking(false);
 		pool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		
-		startReceiveLoop(); // Schleife läuft automatisch
+		startReceiveLoop();
 	}
 	
 	// Server registrieren / verbinden (UDP = verbindungslos)
@@ -71,8 +71,8 @@ public class UdpClientEngine {
 								byte[] data = new byte[buffer.limit()];
 								buffer.get(data);
 								
-								// asynchron verarbeiten
-								pool.submit(() -> handleMessage(server, data));
+								/* Handelt eingehende Nachrichten*/
+								pool.submit(() -> handleIncomingData(servers.get(server), data));
 							}
 						}
 					}
@@ -93,7 +93,7 @@ public class UdpClientEngine {
 				new InetSocketAddress(controller.getHost(), controller.getPort());
 		try {
 			
-			byte[] data = getDataSet(controller, content);
+			byte[] data = prepareData(controller, content); // Aus Basisklasse
 			
 			ByteBuffer buffer = ByteBuffer.wrap(data);
 			int sent = channel.send(buffer, target);
@@ -106,27 +106,9 @@ public class UdpClientEngine {
 		}
 	}
 	
-	private byte[] getDataSet(Controller controller, byte[]content){
-		byte[] prefix = controller.getPrefix().getBytes(StandardCharsets.UTF_8);
-		byte[] suffix = controller.getSuffix().getBytes(StandardCharsets.UTF_8);
-		
-		ByteArrayOutputStream out = new ByteArrayOutputStream(
-				prefix.length + content.length + suffix.length
-		);
-		out.writeBytes(prefix);
-		out.writeBytes(content);
-		out.writeBytes(suffix);
-		
-		return out.toByteArray();
-	}
-	
-	// Verarbeitung eingehender Nachrichten
-	private void handleMessage(SocketAddress server, byte[] data) {
-		Controller controller = servers.get(server);
-		if (controller != null) {
-			controllerContentService.startHandleContent(controller, data);
-		} else {
-			log.error("{}:{}", server, Arrays.toString(data));
-		}
+	@Override
+	public boolean supports(Controller controller) {
+		// Logik: Ist ein Client-Controller UND nutzt UDP
+		return controller.isActive() && controller instanceof UdpController;
 	}
 }
