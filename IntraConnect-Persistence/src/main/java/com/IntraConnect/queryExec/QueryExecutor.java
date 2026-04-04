@@ -31,26 +31,39 @@ public class QueryExecutor {
 			throw new RuntimeException(e);
 		}
 	}
-	public ResultSet select(String sql, Connection connection) {
+	public ResultSet select(String sql, Connection connection, Object... params) {
 		return submit(() -> {
-			PreparedStatement ps = connection.prepareStatement(sql);
-			return ps.executeQuery(); // Statement bleibt offen
+			try (PreparedStatement ps = connection.prepareStatement(sql)) {
+				// Parameter dynamisch setzen
+				for (int i = 0; i < params.length; i++) {
+					ps.setObject(i + 1, params[i]);
+				}
+				return ps.executeQuery();
+			}
 		});
 	}
 	
-	public int update(String sql, Connection connection) {
+	public int update(String sql, Connection connection, Object... params) {
 		return submit(() -> {
 			try (PreparedStatement ps = connection.prepareStatement(sql)) {
+				// Parameter dynamisch setzen
+				for (int i = 0; i < params.length; i++) {
+					ps.setObject(i + 1, params[i]);
+				}
 				return ps.executeUpdate();
 			}
 		});
 	}
 	
-	public boolean exists(String sql, Connection connection) {
+	public boolean exists(String sql, Connection connection, Object... params) {
 		String s = "SELECT EXISTS (" + sql + ")";
 		return submit(() -> {
 			String wrappedSql = "SELECT CASE WHEN EXISTS (" + sql + ") THEN 1 ELSE 0 END";
 			try (PreparedStatement ps = connection.prepareStatement(wrappedSql)) {
+				// Parameter dynamisch setzen
+				for (int i = 0; i < params.length; i++) {
+					ps.setObject(i + 1, params[i]);
+				}
 				try (ResultSet rs = ps.executeQuery()) {
 					rs.next();
 					return rs.getBoolean(1);
@@ -59,13 +72,17 @@ public class QueryExecutor {
 		});
 	}
 	
-	public void insert(String sql, Connection connection) {
-		update(sql, connection);
+	public void insert(String sql, Connection connection, Object... params) {
+		update(sql, connection, params);
 	}
 	
-	public boolean delete(String sql, Connection connection) {
+	public boolean delete(String sql, Connection connection, Object... params) {
 		return submit(() -> {
 			try (PreparedStatement ps = connection.prepareStatement(sql)) {
+				// Parameter dynamisch setzen
+				for (int i = 0; i < params.length; i++) {
+					ps.setObject(i + 1, params[i]);
+				}
 				return ps.execute();
 			}
 		});

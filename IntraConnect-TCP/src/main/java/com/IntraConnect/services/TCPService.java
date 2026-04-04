@@ -108,12 +108,13 @@ public class TCPService extends PilotApplicationServices {
 
     private void InitializeDatabaseTableController() {
         try(Transaction transaction = Transaction.create()){
-			
+			int count = transaction.queryCount("SELECT COUNT(*) FROM CONTROLLER");
+			if(count > 0)
+				return;
             for (Controller controller : _controllers) {
                 String sql = "INSERT INTO CONTROLLER (NAME, DESCRIPTION, CONNECTED) " +
-						"VALUES (" + "'"+controller.getName()+"'," +
-						"'Host->"+controller.getHost()+"/ PORT->"+controller.getPort()+"','"+false+"');";
-				transaction.insert(sql);
+						"VALUES (?, ?, ?);";
+				transaction.insert(sql, controller.getName(), "Host->"+ controller.getHost()+"/ PORT->"+controller.getPort(), false);
             }
             
             transaction.commit();

@@ -38,8 +38,8 @@ public class Transaction implements AutoCloseable {
 				.create(dbName);
 	}
 	
-	public ResultSet select(String sql) {
-		ResultSet rs = executor.select(sql, connection);
+	public ResultSet select(String sql, Object... params) {
+		ResultSet rs = executor.select(sql, connection, params);
 		
 		try {
 			openStatements.add(rs.getStatement());
@@ -50,20 +50,33 @@ public class Transaction implements AutoCloseable {
 		return rs;
 	}
 	
-	public boolean exists(String sql) {
-		return executor.exists(sql, connection);
+	public int queryCount(String sql, Object... params) {
+		ResultSet rs = executor.select(sql, connection, params);
+		
+		try {
+			openStatements.add(rs.getStatement());
+			
+			return rs.getInt(1);
+			
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
-	public int update(String sql) {
-		return executor.update(sql, connection);
+	public boolean exists(String sql, Object... params) {
+		return executor.exists(sql, connection, params);
 	}
 	
-	public boolean delete(String sql) {
-		return executor.delete(sql, connection);
+	public int update(String sql, Object... params) {
+		return executor.update(sql, connection, params);
 	}
 	
-	public void insert(String sql) {
-		executor.insert(sql, connection);
+	public boolean delete(String sql, Object... params) {
+		return executor.delete(sql, connection, params);
+	}
+	
+	public void insert(String sql, Object... params) {
+		executor.insert(sql, connection, params);
 	}
 	
 	public void commit() {

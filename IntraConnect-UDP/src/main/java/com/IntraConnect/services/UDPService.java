@@ -102,12 +102,15 @@ public class UDPService extends PilotApplicationServices {
 	
 	private void InitializeDatabaseTableController() {
 		try(Transaction transaction = Transaction.create()){
-			StringBuilder query = new StringBuilder();
-			transaction.update(query.toString());
+			int count = transaction.queryCount("SELECT COUNT(*) FROM CONTROLLER");
+			if(count > 0)
+				return;
 			for (Controller controller : _controllers) {
-				query.append("INSERT INTO CONTROLLER (NAME, DESCRIPTION, CONNECTED) VALUES (" + "'").append(controller.getName()).append("','Host->").append(controller.getHost()).append("/ PORT->").append(controller.getPort()).append("','").append(false).append("');");
+				String sql = "INSERT INTO CONTROLLER (NAME, DESCRIPTION, CONNECTED) " +
+						"VALUES (?, ?, ?);";
+				transaction.insert(sql, controller.getName(), "Host->"+ controller.getHost()+"/ PORT->"+controller.getPort(), false);
 			}
-			transaction.insert(query.toString());
+			
 			transaction.commit();
 			
 		}catch (Exception e){

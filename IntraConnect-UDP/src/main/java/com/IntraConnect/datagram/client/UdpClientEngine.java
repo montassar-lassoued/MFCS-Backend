@@ -1,7 +1,6 @@
 package com.IntraConnect.datagram.client;
 
 import com.IntraConnect.messageEngine.AbstractMessageEngine;
-import com.IntraConnect.services.content.UDPControllerContentService;
 import com.IntraConnect.controller.Controller;
 import com.IntraConnect.udpController.UdpController;
 import org.slf4j.Logger;

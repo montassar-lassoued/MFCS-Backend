@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class ControllerMessageScheduler {
@@ -29,35 +31,60 @@ public class ControllerMessageScheduler {
 	
 	@Scheduled(fixedRate = 2000)
 	public void sendScheduledMessages() {
-		// Wir holen uns alle Controller, die Nachrichten erwarten könnten
-		List<Controller> activeControllers = controllerRegistry.getAllControllers();
+		Map<String, Controller> controllerMap = controllerRegistry.getAllControllers().stream()
+				.collect(Collectors.toMap(Controller::getName, c -> c, (a, b) -> a));
 		
-		for (Controller controller : activeControllers) {
-			// Finde die passende Engine für diesen Controller (z.B. TCP Client, TCP Server oder UDP)
-			messageEngines.stream()
-					.filter(engine -> engine.supports(controller))
-					.findFirst()
-					.ifPresent(engine -> processMessagesForController(controller, engine));
-		}
+		processMessages(controllerMap);
 	}
 	
-	private void processMessagesForController(Controller controller, MessageEngine engine) {
+	private void processMessages(Map<String, Controller> controllerMap) {
 		try (Transaction transaction = Transaction.create()) {
-			// SQL-Abfrage pro Controller (verhindert riesige IN-Klauseln und SQL-Injection Gefahr)
-			String sql = "SELECT ID, CONTENT FROM TRANSFER_OUT WHERE CONTROLLER_ID = (SELECT ID FROM CONTROLLER WHERE NAME= '"+controller.getName()+"')";
-			ResultSet rs = transaction.select(sql); // Nutze Prepared Statements!
+			
+			// SQL-Query mit direkt eingebettetem Enum-Wert
+			String selectSql = "SELECT T.ID, C.NAME, T.CONTENT FROM TRANSFER_OUT T " +
+					"JOIN CONTROLLER C ON C.ID = T.CONTROLLER_ID " +
+					"WHERE T.PROCESSED = ?";
+			
+			ResultSet rs = transaction.select(selectSql, Transfer.NEW);
 			
 			while (rs.next()) {
 				int id = rs.getInt("ID");
+				String controllerName = rs.getString("NAME");
 				byte[] content = rs.getBytes("CONTENT");
 				
-				boolean success = engine.sendMessage(controller, content);
-				Transfer status = success ? Transfer.OK : Transfer.FAILED;
+				Controller controller = controllerMap.get(controllerName);
+				if (controller == null) {
+					log.warn("Kein registrierter Controller gefunden: {}", controllerName);
+					continue;
+				}
 				
-				transaction.update("UPDATE TRANSFER_OUT SET PROCESSED = '"+status+"' WHERE ID ="+id);
+				MessageEngine engine = messageEngines.stream()
+						.filter(e -> e.supports(controller))
+						.findFirst()
+						.orElse(null);
+				
+				if (engine == null) {
+					log.error("Keine Engine für Controller {} gefunden", controllerName);
+					continue;
+				}
+				
+				try {
+					boolean success = engine.sendMessage(controller, content);
+					Transfer status = success ? Transfer.OK : Transfer.FAILED;
+					
+					// Update-String mit direkter Verkettung von Status und ID
+					String updateSql = "UPDATE TRANSFER_OUT SET PROCESSED = ?" +
+							"WHERE ID = " + id;
+					transaction.update(updateSql, status);
+					
+				} catch (Exception e) {
+					log.error("Fehler beim Verarbeiten der ID {}", id, e);
+					// Im Fehlerfall auf FAILED setzen
+					transaction.update("UPDATE TRANSFER_OUT SET PROCESSED = ? WHERE ID = ? ", Transfer.FAILED, id);
+				}
 			}
 		} catch (Exception e) {
-			log.error("Fehler beim Verarbeiten von Controller {}", controller.getName(), e);
+			log.error("Kritischer Fehler im Scheduler-Prozess", e);
 		}
 	}
 }
