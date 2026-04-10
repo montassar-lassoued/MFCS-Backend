@@ -14,13 +14,14 @@ import com.IntraConnect.utils.LoadUnit;
 import org.jdom2.Element;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
+@Service
 public class StockMovementService extends PilotApplicationServices {
 	boolean enabled;
 	

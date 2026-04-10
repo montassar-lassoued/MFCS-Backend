@@ -3,7 +3,10 @@ package com.IntraConnect.controller;
 
 import com.IntraConnect.xml.ControllerConfig;
 
-public class Controller {
+import java.util.HashMap;
+import java.util.Map;
+
+public class Connectable {
 
     private String name;
     private boolean active;
@@ -12,9 +15,10 @@ public class Controller {
     private String host;
     private int port;
     private int timeout;
+	// Flexibler Speicher für protokollspezifische Einstellungen
+	private final Map<String, Object> properties = new HashMap<>();
 
-
-    public Controller(ControllerConfig config){
+    public Connectable(ControllerConfig config){
 
         setName(config.getName());
         setActive(config.isActive());
@@ -22,7 +26,6 @@ public class Controller {
         setSuffix(config.getSuffix());
         setHost(config.getConnection().getHost());
         setPort(config.getConnection().getPort());
-        setTimeout(config.getConnection().getTimeout());
     }
     public String getName() {
         return name;
@@ -80,12 +83,12 @@ public class Controller {
         }
         this.port = port;
     }
-
-    public int getTimeout() {
-        return timeout;
-    }
-
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
-    }
+	
+	public void setProperty(String key, Object value) {
+		properties.put(key, value);
+	}
+	
+	public Object getProperty(String key) {
+		return properties.get(key);
+	}
 }

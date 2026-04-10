@@ -1,11 +1,11 @@
 package com.IntraConnect.services;
 
+import com.IntraConnect.controller.Connectable;
 import com.IntraConnect.messageEngine.ControllerRegistry;
-import com.IntraConnect.async.client.AsyncClientEngine;
-import com.IntraConnect.async.server.AsyncServerEngine;
+import com.IntraConnect.async.client.TcpClientEngine;
+import com.IntraConnect.async.server.TcpServerEngine;
 import com.IntraConnect.command.handlerReg.Register;
 import com.IntraConnect.queryExec.transaction.Transaction;
-import com.IntraConnect.controller.Controller;
 import com.IntraConnect.helper.Console;
 import com.IntraConnect.intf.PilotApplicationServices;
 import com.IntraConnect.tcpController.TcpController;
@@ -16,6 +16,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import com.IntraConnect.xml.ConnectionConfig;
 import com.IntraConnect.xml.ControllerConfig;
+import org.springframework.stereotype.Service;
+
 import java.io.IOException;
 import java.net.BindException;
 import java.net.ServerSocket;
@@ -23,20 +25,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-@Component
+@Service
 public class TCPService extends PilotApplicationServices {
 
-    List<Controller> _controllers = new ArrayList<>();
+    List<Connectable> _connectables = new ArrayList<>();
 	private final ControllerRegistry controllerRegistry;
-	private final AsyncServerEngine serverEngine;
-	private final AsyncClientEngine clientEngine;
+	private final TcpServerEngine serverEngine;
+	private final TcpClientEngine clientEngine;
 	boolean enabled;
 	private static final Logger log = LoggerFactory.getLogger(TCPService.class);
 	
     public TCPService(Register register,
 					  ControllerRegistry controllerRegistry,
-					  AsyncServerEngine serverEngine,
-					  AsyncClientEngine clientEngine) {
+					  TcpServerEngine serverEngine,
+					  TcpClientEngine clientEngine) {
 		super(register);
 		
 		this.controllerRegistry = controllerRegistry;
@@ -74,7 +76,7 @@ public class TCPService extends PilotApplicationServices {
 				ControllerConfig controllerConfig = new ControllerConfig(name, active, prefix, suffix, connectionConfig);
 				
 				TcpController _controller = new TcpController(controllerConfig);
-				_controllers.add(_controller);
+				_connectables.add(_controller);
 			}
 		}
 	}
@@ -89,19 +91,19 @@ public class TCPService extends PilotApplicationServices {
 		if (!enabled){
 			return;
 		}
-        for (Controller controller : _controllers) {
-            if (controller.isActive()) {
-                try (ServerSocket serverSocket = new ServerSocket(controller.getPort())) {
-                    Console.info.println(controller.getName() + " -Port " + controller.getPort() + " ist verfügbar.");
+        for (Connectable connectable : _connectables) {
+            if (connectable.isActive()) {
+                try (ServerSocket serverSocket = new ServerSocket(connectable.getPort())) {
+                    Console.info.println(connectable.getName() + " -Port " + connectable.getPort() + " ist verfügbar.");
                 } catch (BindException e) {
-                    throw new RuntimeException(controller.getName() + " -Port " + controller.getPort() + " ist bereits belegt.");
+                    throw new RuntimeException(connectable.getName() + " -Port " + connectable.getPort() + " ist bereits belegt.");
                 } catch (IOException e) {
-                    throw new RuntimeException(controller.getName() + " - Ein Fehler ist aufgetreten: " + e.getMessage());
+                    throw new RuntimeException(connectable.getName() + " - Ein Fehler ist aufgetreten: " + e.getMessage());
                 }
             }
         }
 		//Controller registrieren
-		controllerRegistry.register(_controllers);
+		controllerRegistry.register(_connectables);
         // Alles ok, wir können nun die Controller in die datenbank anlegen
         InitializeDatabaseTableController();
     }
@@ -111,10 +113,10 @@ public class TCPService extends PilotApplicationServices {
 			int count = transaction.queryCount("SELECT COUNT(*) FROM CONTROLLER");
 			if(count > 0)
 				return;
-            for (Controller controller : _controllers) {
+            for (Connectable connectable : _connectables) {
                 String sql = "INSERT INTO CONTROLLER (NAME, DESCRIPTION, CONNECTED) " +
 						"VALUES (?, ?, ?);";
-				transaction.insert(sql, controller.getName(), "Host->"+ controller.getHost()+"/ PORT->"+controller.getPort(), false);
+				transaction.insert(sql, connectable.getName(), "Host->"+ connectable.getHost()+"/ PORT->"+ connectable.getPort(), false);
             }
             
             transaction.commit();
@@ -130,13 +132,13 @@ public class TCPService extends PilotApplicationServices {
 			return;
 		}
         try {
-            for (Controller controller : _controllers) {
-                if (controller.isActive()) {
+            for (Connectable connectable : _connectables) {
+                if (connectable.isActive()) {
 					
-					serverEngine.registerController(controller);
+					serverEngine.doConnect(connectable);
 
                 } else {
-                    clientEngine.connect(controller);
+                    clientEngine.doConnect(connectable);
                 }
             }
 			

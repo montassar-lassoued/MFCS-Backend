@@ -1,9 +1,9 @@
 package com.IntraConnect.messageScheduler;
 
 import com.IntraConnect._enum.Transfer;
-import com.IntraConnect.controller.Controller;
+import com.IntraConnect.controller.Connectable;
 import com.IntraConnect.messageEngine.ControllerRegistry;
-import com.IntraConnect.messageEngine.MessageEngine;
+import com.IntraConnect.messageEngine.ConnectionEngine;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,23 +21,23 @@ public class ControllerMessageScheduler {
 	private static final Logger log = LoggerFactory.getLogger(ControllerMessageScheduler.class);
 	
 	// Spring injiziert hier automatisch alle Klassen, die MessageEngine implementieren
-	private final List<MessageEngine> messageEngines;
+	private final List<ConnectionEngine> connectionEngines;
 	private final ControllerRegistry controllerRegistry;
 	
-	public ControllerMessageScheduler(List<MessageEngine> messageEngines, ControllerRegistry controllerRegistry) {
-		this.messageEngines = messageEngines;
+	public ControllerMessageScheduler(List<ConnectionEngine> connectionEngines, ControllerRegistry controllerRegistry) {
+		this.connectionEngines = connectionEngines;
 		this.controllerRegistry = controllerRegistry;
 	}
 	
 	@Scheduled(fixedRate = 2000)
 	public void sendScheduledMessages() {
-		Map<String, Controller> controllerMap = controllerRegistry.getAllControllers().stream()
-				.collect(Collectors.toMap(Controller::getName, c -> c, (a, b) -> a));
+		Map<String, Connectable> controllerMap = controllerRegistry.getAllControllers().stream()
+				.collect(Collectors.toMap(Connectable::getName, c -> c, (a, b) -> a));
 		
 		processMessages(controllerMap);
 	}
 	
-	private void processMessages(Map<String, Controller> controllerMap) {
+	private void processMessages(Map<String, Connectable> controllerMap) {
 		try (Transaction transaction = Transaction.create()) {
 			
 			// SQL-Query mit direkt eingebettetem Enum-Wert
@@ -52,14 +52,14 @@ public class ControllerMessageScheduler {
 				String controllerName = rs.getString("NAME");
 				byte[] content = rs.getBytes("CONTENT");
 				
-				Controller controller = controllerMap.get(controllerName);
-				if (controller == null) {
+				Connectable connectable = controllerMap.get(controllerName);
+				if (connectable == null) {
 					log.warn("Kein registrierter Controller gefunden: {}", controllerName);
 					continue;
 				}
 				
-				MessageEngine engine = messageEngines.stream()
-						.filter(e -> e.supports(controller))
+				ConnectionEngine engine = connectionEngines.stream()
+						.filter(e -> e.supports(connectable))
 						.findFirst()
 						.orElse(null);
 				
@@ -69,7 +69,7 @@ public class ControllerMessageScheduler {
 				}
 				
 				try {
-					boolean success = engine.sendMessage(controller, content);
+					boolean success = engine.sendMessage(connectable, content);
 					Transfer status = success ? Transfer.OK : Transfer.FAILED;
 					
 					// Update-String mit direkter Verkettung von Status und ID

@@ -5,8 +5,9 @@ import com.IntraConnect.intf.PilotApplicationServices;
 import org.jdom2.Element;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
+@Service
 public class InventoryManagementService extends PilotApplicationServices {
 	
 	public InventoryManagementService(Register register){

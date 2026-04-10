@@ -1,8 +1,11 @@
 package com.IntraConnect.services;
 
+import com.IntraConnect.command.handlerReg.time.FixedRateTrigger;
+import com.IntraConnect.command.handlerReg.time.TriggerTime;
 import com.IntraConnect.dispatcher.dbListner.DatabaseChangeDispatcher;
 import com.IntraConnect.command.handlerReg.Register;
 import com.IntraConnect.dispatcher.processors.TransferInDispatcher;
+import com.IntraConnect.handler.ConnectableStateHandler;
 import com.IntraConnect.persistence.Persistence;
 import com.IntraConnect.helper.Console;
 import com.IntraConnect.intf.PilotCoreServices;
@@ -13,10 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import com.IntraConnect.xml.DatabaseConfig;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-@Component
+@Service
 public class PersistenceService extends PilotCoreServices {
 	
 	private static final Logger log = LoggerFactory.getLogger(PersistenceService.class);
@@ -61,7 +65,7 @@ public class PersistenceService extends PilotCoreServices {
 				boolean encrypt = Boolean.parseBoolean(database.getAttributeValue("encrypt"));
 				databaseConfig.setEncrypt(encrypt);
 				
-				boolean mainDB = Boolean.parseBoolean(database.getAttributeValue("main", "false"));
+				boolean isMain = Boolean.parseBoolean(database.getAttributeValue("main", "false"));
 				
 				String username = database.getChildText("Username");
 				databaseConfig.setUsername(username);
@@ -71,21 +75,30 @@ public class PersistenceService extends PilotCoreServices {
 				Persistence persistence = new Persistence(databaseConfig, context);
 				persistence.initialize();
 				
-				if (mainDB) {
-					if (main > 0) {
-						throw new RuntimeException("Module 'Persistence' -> there more as one 'main' database");
+				// 1. JEDE Datenbank kommt in die Map, damit sie verwaltet werden kann
+				this.Databases.put(name, persistence);
+				
+				// 2. Wenn es die Main-DB ist, zusätzlich die Referenz setzen
+				if (isMain) {
+					if (this.mainDatabase != null) {
+						throw new RuntimeException("Module 'Persistence' -> there are more than one 'main' databases");
 					}
 					this.mainDatabase = persistence;
-					main++;
-				} else {
-					this.Databases.put(name, persistence);
 				}
+			}
+			// 3. Sicherheitscheck: Wurde eine Main-DB definiert?
+			if (enabled && this.mainDatabase == null) {
+				// Optional: Falls die erste Datenbank automatisch "main" sein soll, wenn nichts definiert ist:
+				// if (!Databases.isEmpty()) this.mainDatabase = Databases.values().iterator().next();
+				// ODER (sicherer) Fehler werfen:
+				log.warn("No main database defined in configuration!");
 			}
 		}
 	}
 	
 	@Override
 	public void register() {
+		register.registerHandler(ConnectableStateHandler.class, new FixedRateTrigger(1000));
 	}
 	
 	@Override
@@ -93,6 +106,9 @@ public class PersistenceService extends PilotCoreServices {
 		if (!enabled) {
 			return;
 		}
+		// Sicherstellen, dass die Main-DB existiert
+		getMainDatabaseOrThrow();
+		
 		for (Persistence p : Databases.values()) {
 			if (!p.isConnected()) {
 				throw new RuntimeException("can't connect to Database '" + p.getDatabaseName() + "'");

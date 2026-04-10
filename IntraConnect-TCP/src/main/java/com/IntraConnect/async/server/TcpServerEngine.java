@@ -1,55 +1,69 @@
 package com.IntraConnect.async.server;
 
-import com.IntraConnect.controller.Controller;
-import com.IntraConnect.messageEngine.AbstractMessageEngine;
+import com.IntraConnect.controller.Connectable;
+import com.IntraConnect.messageEngine.AbstractConnectionEngine;
 import com.IntraConnect.tcpController.TcpController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 
 @Component
-public class AsyncServerEngine extends AbstractMessageEngine {
+public class TcpServerEngine extends AbstractConnectionEngine {
 	
-	private static final Logger log = LoggerFactory.getLogger(AsyncServerEngine.class);
+	private static final Logger log = LoggerFactory.getLogger(TcpServerEngine.class);
 	private final Map<String, List<TcpSession>> controllerSessions = new ConcurrentHashMap<>();
 	private final java.nio.channels.AsynchronousChannelGroup channelGroup;
+	@Autowired
+	private TaskScheduler reconnectCtrlTaskScheduler; // Spring's interner Scheduler
 	
-	public AsyncServerEngine() throws IOException {
+	public TcpServerEngine() throws IOException {
 		this.channelGroup = java.nio.channels.AsynchronousChannelGroup.withFixedThreadPool(
 				Runtime.getRuntime().availableProcessors() * 2,
 				Executors.defaultThreadFactory()
 		);
 	}
 	
-	/** Controller registrieren -> startet ServerSocketChannel auf dem Port */
-	public void registerController(Controller controller) throws IOException {
-		AsynchronousServerSocketChannel server =
-				AsynchronousServerSocketChannel.open(channelGroup)
-						.bind(new InetSocketAddress(controller.getPort()));
-		accept(server, controller);
-		log.info("Controller '{}' listening on port {}", controller.getName(), controller.getPort());
+	@Override
+	protected void connect(Connectable connectable) {
+		try {
+			AsynchronousServerSocketChannel server = AsynchronousServerSocketChannel.open(channelGroup)
+					.bind(new InetSocketAddress(connectable.getPort()));
+			
+			accept(server, connectable);
+			log.info("Controller '{}' listening on port {}", connectable.getName(), connectable.getPort());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	
+	@Override
+	protected void disconnect(Connectable connectable) {
+		List<TcpSession> sessions = controllerSessions.get(connectable.getName());
+		if (sessions != null) {
+			sessions.stream()
+					.findFirst()
+					.ifPresent(this::closeSession);
+		}
+	}
+
 	/** Accept neuer Clients */
-	private void accept(AsynchronousServerSocketChannel server, Controller controller) {
+	private void accept(AsynchronousServerSocketChannel server, Connectable connectable) {
 		server.accept(null, new CompletionHandler<>() {
 			@Override
 			public void completed(AsynchronousSocketChannel client, Object att) {
-				TcpSession session = new TcpSession(client, controller);
+				TcpSession session = new TcpSession(client, connectable);
 				registerSession(session);
 				startRead(session);
 				server.accept(null, this);
@@ -113,17 +127,17 @@ public class AsyncServerEngine extends AbstractMessageEngine {
 	}
 	
 	@Override
-	public boolean supports(Controller controller) {
+	public boolean supports(Connectable connectable) {
 		// Logik: Ist ein Server-Controller UND nutzt TCP
-		return !controller.isActive() && controller instanceof TcpController;
+		return !connectable.isActive() && connectable instanceof TcpController;
 	}
 	
 	@Override
-	public boolean sendMessage(Controller controller, byte[] content) {
-		List<TcpSession> sessions = controllerSessions.get(controller.getName());
+	public boolean sendMessage(Connectable connectable, byte[] content) {
+		List<TcpSession> sessions = controllerSessions.get(connectable.getName());
 		if (sessions == null || sessions.isEmpty()) return false;
 		
-		byte[] data = prepareData(controller, content); // Aus Basisklasse
+		byte[] data = prepareData(connectable, content); // Aus Basisklasse
 		byte[] framed = addLengthPrefix(data);         // Aus Basisklasse
 		
 		for (TcpSession session : sessions) {

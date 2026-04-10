@@ -17,11 +17,12 @@ import org.jdom2.Element;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Component
+@Service
 public class UIService extends PilotApplicationServices {
 
     List<MenuItem> viewItems = new ArrayList<>();

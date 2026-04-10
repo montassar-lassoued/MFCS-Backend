@@ -1,11 +1,11 @@
 package com.IntraConnect.services;
 
+import com.IntraConnect.controller.Connectable;
 import com.IntraConnect.datagram.server.UdpServerEngine;
 import com.IntraConnect.datagram.client.UdpClientEngine;
 import com.IntraConnect.command.handlerReg.Register;
 import com.IntraConnect.messageEngine.ControllerRegistry;
 import com.IntraConnect.queryExec.transaction.Transaction;
-import com.IntraConnect.controller.Controller;
 import com.IntraConnect.helper.Console;
 import com.IntraConnect.intf.PilotApplicationServices;
 import com.IntraConnect.udpController.UdpController;
@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import com.IntraConnect.xml.ConnectionConfig;
 import com.IntraConnect.xml.ControllerConfig;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.BindException;
@@ -21,10 +22,10 @@ import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Service
 public class UDPService extends PilotApplicationServices {
 	
-	List<Controller> _controllers = new ArrayList<>();
+	List<Connectable> _connectables = new ArrayList<>();
 	private final UdpServerEngine udpServerEngine;
 	private final UdpClientEngine clientEngine;
 	private final ControllerRegistry controllerRegistry;
@@ -68,7 +69,7 @@ public class UDPService extends PilotApplicationServices {
 				ControllerConfig controllerConfig = new ControllerConfig(name, active, prefix, suffix, connectionConfig);
 				
 				UdpController _controller = new UdpController(controllerConfig);
-				_controllers.add(_controller);
+				_connectables.add(_controller);
 			}
 		}
 	}
@@ -83,19 +84,19 @@ public class UDPService extends PilotApplicationServices {
 		if (!enabled){
 			return;
 		}
-		for (Controller controller : _controllers) {
-			if (controller.isActive()) {
-				try (DatagramSocket socket = new DatagramSocket(controller.getPort())) {
-					Console.info.println(controller.getName() + " -Port " + controller.getPort() + " ist verfügbar.");
+		for (Connectable connectable : _connectables) {
+			if (connectable.isActive()) {
+				try (DatagramSocket socket = new DatagramSocket(connectable.getPort())) {
+					Console.info.println(connectable.getName() + " -Port " + connectable.getPort() + " ist verfügbar.");
 				} catch (BindException e) {
-					throw new RuntimeException(controller.getName() + " -Port " + controller.getPort() + " ist bereits belegt.");
+					throw new RuntimeException(connectable.getName() + " -Port " + connectable.getPort() + " ist bereits belegt.");
 				} catch (IOException e) {
-					throw new RuntimeException(controller.getName() + " - Ein Fehler ist aufgetreten: " + e.getMessage());
+					throw new RuntimeException(connectable.getName() + " - Ein Fehler ist aufgetreten: " + e.getMessage());
 				}
 			}
 		}
 		//Controller registrieren
-		controllerRegistry.register(_controllers);
+		controllerRegistry.register(_connectables);
 		// in die DB speichern
 		InitializeDatabaseTableController();
 	}
@@ -105,10 +106,10 @@ public class UDPService extends PilotApplicationServices {
 			int count = transaction.queryCount("SELECT COUNT(*) FROM CONTROLLER");
 			if(count > 0)
 				return;
-			for (Controller controller : _controllers) {
+			for (Connectable connectable : _connectables) {
 				String sql = "INSERT INTO CONTROLLER (NAME, DESCRIPTION, CONNECTED) " +
 						"VALUES (?, ?, ?);";
-				transaction.insert(sql, controller.getName(), "Host->"+ controller.getHost()+"/ PORT->"+controller.getPort(), false);
+				transaction.insert(sql, connectable.getName(), "Host->"+ connectable.getHost()+"/ PORT->"+ connectable.getPort(), false);
 			}
 			
 			transaction.commit();
@@ -124,11 +125,11 @@ public class UDPService extends PilotApplicationServices {
 			return;
 		}
 		try {
-			for (Controller controller : _controllers) {
-				if (controller.isActive()) {
-					udpServerEngine.registerController(controller);
+			for (Connectable connectable : _connectables) {
+				if (connectable.isActive()) {
+					udpServerEngine.doConnect(connectable);
 				} else {
-					clientEngine.registerController(controller);
+					clientEngine.doConnect(connectable);
 				}
 			}
 		} catch (Exception e) {

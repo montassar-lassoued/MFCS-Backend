@@ -2,20 +2,25 @@ package com.IntraConnect.queryExec.transaction;
 
 
 import com.IntraConnect.queryExec.QueryExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
 public class Transaction implements AutoCloseable {
 	
+	private static final Logger log = LoggerFactory.getLogger(Transaction.class);
 	private final Connection connection;
 	private final QueryExecutor executor;
-	private final List<Statement> openStatements = new ArrayList<>();
+	private final List<Statement> openStatements = Collections.synchronizedList(new ArrayList<>());
 	private boolean committed = false;
 	
 	Transaction(DataSource dataSource,
@@ -43,21 +48,19 @@ public class Transaction implements AutoCloseable {
 		
 		try {
 			openStatements.add(rs.getStatement());
+			
+			return rs;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
-		
-		return rs;
 	}
 	
 	public int queryCount(String sql, Object... params) {
-		ResultSet rs = executor.select(sql, connection, params);
-		
-		try {
-			openStatements.add(rs.getStatement());
-			
-			return rs.getInt(1);
-			
+		try (ResultSet rs = executor.select(sql, connection, params);
+			 Statement st = rs.getStatement()) {
+			openStatements.add(st);
+			if (rs.next()) return rs.getInt(1);
+			return 0;
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -90,18 +93,18 @@ public class Transaction implements AutoCloseable {
 	
 	@Override
 	public void close() throws Exception {
+		// Erst alle Statements schließen, dann Connection
+		for (Statement st : openStatements) {
+			try { if (st != null) st.close(); } catch (SQLException ignored) {}
+		}
+		openStatements.clear();
+		
 		try {
-			if (!committed) {
-				connection.rollback();
-			}
+			if (!committed) connection.rollback();
+		} catch (SQLException e) {
+			log.error("Rollback fehlgeschlagen", e);
 		} finally {
-			
-			// Alle Statements schließen
-			for (Statement st : openStatements) {
-				try { st.close(); } catch (Exception ignored) {}
-			}
-			
-			connection.close();
+			try { connection.close(); } catch (SQLException ignored) {}
 		}
 	}
 }

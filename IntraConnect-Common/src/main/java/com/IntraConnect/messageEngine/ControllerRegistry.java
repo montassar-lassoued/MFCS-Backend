@@ -1,6 +1,6 @@
 package com.IntraConnect.messageEngine;
 
-import com.IntraConnect.controller.Controller;
+import com.IntraConnect.controller.Connectable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -9,13 +9,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Component
 public class ControllerRegistry {
 	// Speichert alle Controller systemweit, egal aus welchem Modul
-	private final List<Controller> allControllers = new CopyOnWriteArrayList<>();
+	private final List<Connectable> allConnectables = new CopyOnWriteArrayList<>();
 	
-	public void register(List<Controller> controllers) {
-		this.allControllers.addAll(controllers);
+	public void register(List<Connectable> connectables) {
+		this.allConnectables.addAll(connectables);
 	}
 	
-	public List<Controller> getAllControllers() {
-		return allControllers;
+	public List<Connectable> getAllControllers() {
+		return allConnectables;
 	}
 }

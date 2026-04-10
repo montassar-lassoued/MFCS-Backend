@@ -1,9 +1,7 @@
 package com.IntraConnect.intf;
 
-import com.IntraConnect.controller.Controller;
-
-import java.util.List;
+import com.IntraConnect.controller.Connectable;
 
 public interface ContentServices {
-	void handleIncomingData(Controller _controller, byte[] data);
+	void handleIncomingData(Connectable _connectable, byte[] data);
 }

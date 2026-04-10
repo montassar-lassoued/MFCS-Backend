@@ -1,15 +1,14 @@
 package com.IntraConnect.datagram.server;
 
-import com.IntraConnect.controller.Controller;
-import com.IntraConnect.controllerContent.ControllerContentService;
-import com.IntraConnect.intf.ContentServices;
-import com.IntraConnect.messageEngine.AbstractMessageEngine;
+import com.IntraConnect.controller.Connectable;
+import com.IntraConnect.messageEngine.AbstractConnectionEngine;
 import com.IntraConnect.udpController.UdpController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -17,18 +16,18 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
 
 @Component
-public class UdpServerEngine extends AbstractMessageEngine {
+public class UdpServerEngine extends AbstractConnectionEngine {
 	
 	private static final Logger log = LoggerFactory.getLogger(UdpServerEngine.class);
 	private Selector selector;
 	private final ByteBuffer buffer = ByteBuffer.allocateDirect(1024);
+	@Autowired
+	private TaskScheduler reconnectCtrlTaskScheduler; // Spring's interner Scheduler
+	private final List<Connectable> disconnectedCtrl = new ArrayList<>();
 	
 	// Name -> Channel Mapping für das Senden
 	private final Map<String, DatagramChannel> controllerChannels = new HashMap<>();
@@ -42,16 +41,53 @@ public class UdpServerEngine extends AbstractMessageEngine {
 		}
 	}
 	
-	public void registerController(Controller controller) throws IOException {
-		DatagramChannel channel = DatagramChannel.open();
-		channel.bind(new InetSocketAddress(controller.getPort()));
-		channel.configureBlocking(false);
+	@Override
+	protected void connect(Connectable connectable) {
+		try {
+			DatagramChannel channel = DatagramChannel.open();
+			channel.bind(new InetSocketAddress(connectable.getPort()));
+			channel.configureBlocking(false);
+			
+			// WICHTIG: Wir hängen das Controller-Objekt als Attachment an den Key!
+			channel.register(selector, SelectionKey.OP_READ, connectable);
+			
+			controllerChannels.put(connectable.getName(), channel);
+			log.info("UDP Server Controller '{}' listening on port {}", connectable.getName(), connectable.getPort());
+			
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 		
-		// WICHTIG: Wir hängen das Controller-Objekt als Attachment an den Key!
-		channel.register(selector, SelectionKey.OP_READ, controller);
 		
-		controllerChannels.put(controller.getName(), channel);
-		log.info("UDP Server Controller '{}' listening on port {}", controller.getName(), controller.getPort());
+	
+	}
+	
+	@Override
+	protected void disconnect(Connectable connectable) {
+		DatagramChannel channel = controllerChannels.remove(connectable.getName());
+		
+		if (channel != null) {
+			try {
+				// 1. Alle Keys im Selector finden, die diesen Channel nutzen
+				for (SelectionKey key : selector.keys()) {
+					if (key.channel() == channel) {
+						key.cancel(); // Stoppt das Monitoring durch den Selector
+						break;
+					}
+				}
+				// 2. Den Channel physisch schließen (gibt den Port frei)
+				channel.close();
+				
+				// 3. Selector aufwecken, damit der Loop die Änderungen sofort registriert
+				selector.wakeup();
+				
+				log.info("UDP Controller '{}' wurde erfolgreich getrennt und Port freigegeben.", connectable.getName());
+			} catch (IOException e) {
+				log.error("Fehler beim Schließen des UDP Channels für {}", connectable.getName(), e);
+			}
+		} else {
+			log.warn("Disconnect fehlgeschlagen: Kein aktiver UDP Channel für '{}' gefunden.", connectable.getName());
+		}
 	}
 	
 	private void startServerThread() {
@@ -68,7 +104,7 @@ public class UdpServerEngine extends AbstractMessageEngine {
 						if (key.isReadable()) {
 							DatagramChannel channel = (DatagramChannel) key.channel();
 							// Hier holen wir den Controller aus dem Attachment zurück!
-							Controller controller = (Controller) key.attachment();
+							Connectable connectable = (Connectable) key.attachment();
 							
 							buffer.clear();
 							SocketAddress clientAddr = channel.receive(buffer);
@@ -78,7 +114,7 @@ public class UdpServerEngine extends AbstractMessageEngine {
 								buffer.get(data);
 								
 								// Aufruf der zentralen Methode in AbstractMessageEngine
-								handleIncomingData(controller, data);
+								handleIncomingData(connectable, data);
 							}
 						}
 					}
@@ -92,24 +128,24 @@ public class UdpServerEngine extends AbstractMessageEngine {
 	}
 	
 	@Override
-	public boolean sendMessage(Controller controller, byte[] content) {
-		DatagramChannel channel = controllerChannels.get(controller.getName());
+	public boolean sendMessage(Connectable connectable, byte[] content) {
+		DatagramChannel channel = controllerChannels.get(connectable.getName());
 		if (channel == null) return false;
 		
 		try {
-			byte[] data = prepareData(controller, content);
-			InetSocketAddress target = new InetSocketAddress(controller.getHost(), controller.getPort());
+			byte[] data = prepareData(connectable, content);
+			InetSocketAddress target = new InetSocketAddress(connectable.getHost(), connectable.getPort());
 			int sent = channel.send(ByteBuffer.wrap(data), target);
 			return sent == data.length;
 		} catch (IOException e) {
-			log.error("UDP Send Fehler für {}", controller.getName(), e);
+			log.error("UDP Send Fehler für {}", connectable.getName(), e);
 			return false;
 		}
 	}
 	
 	@Override
-	public boolean supports(Controller controller) {
-		return !controller.isActive() && controller instanceof UdpController;
+	public boolean supports(Connectable connectable) {
+		return !connectable.isActive() && connectable instanceof UdpController;
 	}
 }
 

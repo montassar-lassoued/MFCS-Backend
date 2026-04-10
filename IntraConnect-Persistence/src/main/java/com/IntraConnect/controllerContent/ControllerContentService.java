@@ -1,7 +1,7 @@
 package com.IntraConnect.controllerContent;
 
 import com.IntraConnect._enum.Transfer;
-import com.IntraConnect.controller.Controller;
+import com.IntraConnect.controller.Connectable;
 import com.IntraConnect.intf.ContentServices;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import org.slf4j.Logger;
@@ -16,12 +16,12 @@ import java.util.List;
 public abstract class ControllerContentService implements ContentServices {
 	
 	private static final Logger log = LoggerFactory.getLogger(ControllerContentService.class);
-	public Controller controller;
+	public Connectable connectable;
 
 	@Override
-    public void handleIncomingData(Controller _controller, byte[] data){
+    public void handleIncomingData(Connectable _connectable, byte[] data){
         // die Schnittstelle
-        controller =_controller;
+        connectable = _connectable;
         // die Nachricht (kann auch mehrere Nachrichten sein inkl. Prefix und Suffix)
         List<byte[]>  contents = extractContents(data);
         for(byte[] content: contents){
@@ -48,7 +48,7 @@ public abstract class ControllerContentService implements ContentServices {
 		String query = "INSERT INTO TRANSFER_IN " +
 				"(CONTROLLER_ID,_DATE, CONTENT, PROCESSED) " +
 				"VALUES " +
-				"((SELECT ID FROM CONTROLLER WHERE NAME ='"+controller.getName()+"'),'" +
+				"((SELECT ID FROM CONTROLLER WHERE NAME ='"+ connectable.getName()+"'),'" +
 				LocalDate.now() +"'," +
 				Arrays.toString(message.getBytes(StandardCharsets.UTF_8)) +"," +
 				Transfer.NEW +")";
@@ -71,8 +71,8 @@ public abstract class ControllerContentService implements ContentServices {
         // leer?
         if(data.length < 1) return null;
 
-        byte[] prefix = controller.getPrefix().getBytes();
-        byte[] suffix = controller.getSuffix().getBytes();
+        byte[] prefix = connectable.getPrefix().getBytes();
+        byte[] suffix = connectable.getSuffix().getBytes();
         List<byte[]> messages = new ArrayList<>();
         int index = 0;
 

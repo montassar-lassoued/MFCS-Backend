@@ -58,7 +58,7 @@
 			<Navbar>
 				<Items>
 					<Item id="home" label="Home" navigateTo="home" color ="#4ECDC4" order = "1" />
-					<Item id="controller" label="Controller" navigateTo="controller" color ="#4ECDC4" order = "2" />
+					<Item id="connectable" label="Controller" navigateTo="connectable" color ="#4ECDC4" order = "2" />
 					<Item id="users" label="Users" navigateTo="users" color ="#4ECDC4" order = "4" />
 					<Group id="journal" label="Journal" color ="#4ECDC4" order = "3">
 						<Item id="transfer-in" label="Transfer-In" navigateTo="transfer-In" color ="#4ECDC4" order = "1" />
@@ -69,7 +69,7 @@
 				</Items>
 			</Navbar>
 		</Module>
-<!--        <Module name="AMQP" enabled="true">-->
+<!--        <Module name="MQTT" enabled="true">-->
 <!--        </Module>-->
 <!--        <Module name="SAP" enabled="true">-->
 <!--        </Module>-->
@@ -77,24 +77,24 @@
 <!--        </Module>-->
         <Module name="StockMovement" enabled="true">
             <Nodes>
-                <Node point="A" controller="SPS1">
+                <Node point="A" connectable="SPS1">
                     <Ziel point="B" direction="L" cost="1"/>
                     <Ziel point="D" direction="R" cost="1"/>
                 </Node>
 
-                <Node point="B" controller="SPS1">
+                <Node point="B" connectable="SPS1">
                     <Ziel point="C" direction="G" cost="1"/>
                 </Node>
 
-                <Node point="C" controller="SPS2">
+                <Node point="C" connectable="SPS2">
                     <Ziel point="Z" direction="L" cost="1"/>
                 </Node>
 
-                <Node point="D" controller="SPS2">
+                <Node point="D" connectable="SPS2">
                     <Ziel point="Z" direction="R" cost="1"/>
                 </Node>
 
-                <Node point="Z" controller="SPS2"/>
+                <Node point="Z" connectable="SPS2"/>
             </Nodes>
         </Module>
         <Module name="InventoryManagement" enabled="true">
