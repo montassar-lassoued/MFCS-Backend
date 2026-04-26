@@ -1,11 +1,14 @@
 # MFCS Backend – IntraConnect Core Engine ⚙️
 
 [![Java](https://img.shields.io/badge/Java-17%2B-007396?style=for-the-badge&logo=java&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Maven](https://img.shields.io/badge/Maven-3.6%2B-C71A36?style=for-the-badge&logo=apache-maven&logoColor=white)](https://maven.apache.org/)
-[![Status](https://img.shields.io/badge/Status-Early_Development-orange?style=for-the-badge)]()
+[![Status](https://img.shields.io/badge/Status-In_Development-orange?style=for-the-badge)]()
 
 Die **IntraConnect Core Engine** ist das leistungsstarke Rückgrat des Material Flow Control Systems (MFCS). Diese Java-basierte Middleware fungiert als zentrale Schaltstelle zwischen der physischen Hardware (Fördertechnik, Regalbediengeräte) und den übergeordneten Softwaresystemen.
 
+---
+Hinweis: Dieses Projekt ist "Work in Progress". Architektur und Funktionsumfang werden stetig erweitert und modernisiert.
 ---
 
 ## 🏗️ Architektur & Konzepte
