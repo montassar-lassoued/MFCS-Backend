@@ -1,25 +1,25 @@
-package com.IntraConnect.listViews.viewBuilder;
+package com.IntraConnect.listViews.viewBuilder.builder;
 
 import com.IntraConnect.listViews.RequestMode;
 import com.IntraConnect.listViews.ViewButton;
 import com.IntraConnect.listViews.UIButton;
-import com.IntraConnect.listViews.actionServices.PilotServiceMultiRequest;
+import com.IntraConnect.listViews.actionServices.IntraConnectServiceMultiRequest;
 
 import java.util.List;
 
-public final class PilotViewButtonFactory {
+public final class IntraConnectViewButtonFactory {
 
-    private PilotViewButtonFactory() {}
+    private IntraConnectViewButtonFactory() {}
 
     public static List<UIButton> details(List<ViewButton> buttons) {
         return buttons.stream()
-                .map(PilotViewButtonFactory::mapDetails)
+                .map(IntraConnectViewButtonFactory::mapDetails)
                 .toList();
     }
 
     public static List<UIButton> view(List<ViewButton> buttons) {
         return buttons.stream()
-                .map(PilotViewButtonFactory::mapView)
+                .map(IntraConnectViewButtonFactory::mapView)
                 .toList();
     }
 
@@ -37,7 +37,7 @@ public final class PilotViewButtonFactory {
 //settings_remote
     private static UIButton mapView(ViewButton dtlButton) {
         RequestMode mode = RequestMode.SINGLE;
-        if( dtlButton.requestService() instanceof PilotServiceMultiRequest){
+        if( dtlButton.requestService() instanceof IntraConnectServiceMultiRequest){
             mode = RequestMode.MULTI;
         }
         return switch (dtlButton.button()) {

@@ -4,6 +4,6 @@ import com.IntraConnect.listViews.FieldMeta;
 
 import java.util.List;
 
-public interface PilotServiceRequest {
+public interface IntraConnectServiceRequest {
     List<FieldMeta> viewData();
 }

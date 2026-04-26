@@ -1,4 +1,4 @@
-package com.IntraConnect.nodes;
+package com.IntraConnect.path.nodes;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 
 /**
- * Definition der Klasse zur Berechnung des Pfades für eine Ladeeinheit.
+ * Klasse zur Berechnung des Pfades der Ladeeinheit.
  */
 public class LoadUnitPath {
 	
@@ -15,25 +15,25 @@ public class LoadUnitPath {
 	 */
 	public static NextStep calculateNextStep(
 			Map<String, Node> graph, // Die Karte aller Knoten im System (Graph-Struktur).
-			String current,          // Die ID des aktuellen Standorts der Ladeeinheit.
-			String target) {         // Die ID des gewünschten Zielknotens.
+			String current,          // Der Name des aktuellen Standorts der Ladeeinheit.
+			String target) {         // Der Name des gewünschten Zielknotens.
 		
 		// Ruft das Knoten-Objekt für den aktuellen Standort aus der Map ab.
 		Node currentNode = graph.get(current);
 		// Prüft, ob der aktuelle Standort überhaupt im Graphen existiert.
 		if (currentNode == null) {
-			// Gibt eine Fehlermeldung zurück, wenn der Startpunkt unbekannt ist.
+			// Fehlermeldung zurück, wenn der Startpunkt unbekannt ist.
 			return new NextStep(null, null, null, "Unbekannter Standort");
 		}
 		// Ruft das Knoten-Objekt für das Ziel aus der Map ab.
 		Node targetNode = graph.get(target);
 		// Prüft, ob das Ziel im Graphen existiert.
 		if (targetNode == null) {
-			// Gibt eine Fehlermeldung zurück, wenn das Ziel nicht existiert.
+			// Fehlermeldung zurück, wenn das Ziel nicht existiert.
 			return new NextStep(null, null, null, "Unbekannter Ziel");
 		}
 		
-		// Speichert die Kennung des Controllers, der für den aktuellen Knoten zuständig ist.
+		// Controllers, der für den aktuellen Knoten zuständig ist.
 		String controller = currentNode.controller;
 		
 		// Map zur Speicherung der bisher kürzesten Distanz vom Start zu jedem Knoten.
@@ -45,7 +45,7 @@ public class LoadUnitPath {
 		PriorityQueue<NodeDistance> pq =
 				new PriorityQueue<>(Comparator.comparingInt(n -> n.dist));
 		
-		// Initialisiert alle Distanzen im Graphen mit dem maximal möglichen Wert (Unendlich).
+		// Initialisiert alle Distanzen im Graphen.
 		for (String p : graph.keySet()) {
 			dist.put(p, Integer.MAX_VALUE);
 		}

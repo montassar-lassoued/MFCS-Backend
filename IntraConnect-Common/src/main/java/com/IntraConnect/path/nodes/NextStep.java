@@ -1,4 +1,4 @@
-package com.IntraConnect.nodes;
+package com.IntraConnect.path.nodes;
 
 public class NextStep {
 	

@@ -1,4 +1,4 @@
-package com.IntraConnect.nodes;
+package com.IntraConnect.path.nodes;
 
 import java.util.HashMap;
 import java.util.Map;

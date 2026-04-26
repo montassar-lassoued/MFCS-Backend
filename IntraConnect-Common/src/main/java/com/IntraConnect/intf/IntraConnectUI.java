@@ -4,7 +4,7 @@ import com.IntraConnect.UI.MenuItem;
 
 import java.util.List;
 
-public interface PilotUI {
+public interface IntraConnectUI {
 
     List<MenuItem> listViews();
 }

@@ -11,6 +11,6 @@ public class DashboardViewBuilder extends AbstractPilotViewBuilder<DashboardView
     }
 
     public PilotViewDetails build() {
-        return buildInternal(List.of());
+        return build();
     }
 }
