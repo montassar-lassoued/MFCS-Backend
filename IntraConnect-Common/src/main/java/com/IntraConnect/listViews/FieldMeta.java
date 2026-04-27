@@ -72,8 +72,8 @@ public class FieldMeta {
     public Field getType() {
         return type;
     }
-
-    public boolean isNullable() {
+	
+	public boolean isNullable() {
         return nullable;
     }
 

@@ -9,5 +9,6 @@ public enum Field {
     TEXT_AREA,
     DATETIME,
     TIME,
+	PASSWORD,
     NUMBER_ANY, TEXT, EMAIL, DECIMAL
 }
