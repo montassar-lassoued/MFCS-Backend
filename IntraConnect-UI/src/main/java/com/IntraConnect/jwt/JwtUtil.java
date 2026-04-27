@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,14 +33,14 @@ public class JwtUtil {
 
         return claimsTResolver.apply(claims);
     }
-
-    public Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(key)        // Secret oder Key
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
+	
+	public Claims extractAllClaims(String token) {
+		return Jwts.parser()
+				.verifyWith((SecretKey) key)
+				.build()
+				.parseSignedClaims(token)
+				.getPayload();
+	}
 
     public String generateToken(String username, String role){
         Map<String, Object> claims = new HashMap<>();
