@@ -20,7 +20,7 @@ import java.util.Map;
 
 public class DataSourceInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    private static DatabaseConfig databaseConfig;
+    private DatabaseConfig databaseConfig;
     public DataSourceInitializer( Element root) {
         // Suche das Modul „Persistence“
 		Element modules = root.getChild("Modules");
