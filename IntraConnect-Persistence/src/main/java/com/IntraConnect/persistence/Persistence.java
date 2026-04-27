@@ -1,6 +1,7 @@
 package com.IntraConnect.persistence;
 
 
+import com.IntraConnect.BeanUtil.BeanUtil;
 import org.springframework.context.ApplicationContext;
 import com.IntraConnect.xml.DatabaseConfig;
 
@@ -8,9 +9,7 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 
 public class Persistence {
-
-
-    private ApplicationContext context;
+	
     private DataSource dataSource;
     private String databaseName;
     private String type;
@@ -19,18 +18,17 @@ public class Persistence {
     private String username;
     private String password;
 
-    public Persistence(DatabaseConfig database, ApplicationContext context) {
+    public Persistence(DatabaseConfig database) {
         setDatabaseName(database.getName());
         setType(database.getType());
         setHost(database.getHost());
         setPort(database.getPort());
         setUsername(database.getUsername());
         setPassword(database.getPassword());
-        this.context = context;
     }
 
     public void initialize() {
-        dataSource = context.getBean(PersistenceDataSource.class).getDataSource();
+		dataSource = BeanUtil.getBean(PersistenceDataSource.class).getDataSource();
     }
 
     public boolean isConnected() {

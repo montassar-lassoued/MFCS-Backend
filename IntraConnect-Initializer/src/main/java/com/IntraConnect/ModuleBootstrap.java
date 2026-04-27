@@ -83,7 +83,7 @@ public class ModuleBootstrap {
 	
 	private void executePhase(LifecyclePhase phase, IntraConnectServices module){
 		switch (phase){
-			case CONFIGURE -> module.configuration(moduleConfigMap.get(module), context);
+			case CONFIGURE -> module.configuration(moduleConfigMap.get(module));
 			case VALIDATE -> module.validate();
 			case REGISTER -> module.register();
 			case RUN -> module.run();

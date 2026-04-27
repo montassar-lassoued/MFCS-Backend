@@ -6,7 +6,7 @@ import org.jdom2.Element;
 public interface IntraConnectServices {
 	String getName();
 	
-	void configuration(Element root, ApplicationContext context);
+	void configuration(Element root);
 	
 	void register();
 	

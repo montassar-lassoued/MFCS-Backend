@@ -39,7 +39,7 @@ public class UIService extends IntraConnectApplicationServices {
 	}
 	
 	@Override
-	public void configuration(Element module, ApplicationContext context) {
+	public void configuration(Element module) {
 		if (module == null) return;
 		
 		this.enabled = Boolean.parseBoolean(module.getAttributeValue("enabled"));

@@ -19,7 +19,7 @@ public class InventoryManagementService extends IntraConnectApplicationServices 
 	}
 	
 	@Override
-	public void configuration(Element root, ApplicationContext context) {
+	public void configuration(Element root) {
 
 	}
 	

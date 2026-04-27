@@ -48,7 +48,7 @@ public class PersistenceService extends IntraConnectCoreServices {
 	}
 	
 	@Override
-	public void configuration(Element module, ApplicationContext context) {
+	public void configuration(Element module) {
 		if (module != null) {
 			enabled = Boolean.parseBoolean(module.getAttributeValue("enabled"));
 			if (!enabled) {
@@ -76,7 +76,7 @@ public class PersistenceService extends IntraConnectCoreServices {
 				String password = database.getChildText("Password");
 				databaseConfig.setPassword(password);
 				
-				Persistence persistence = new Persistence(databaseConfig, context);
+				Persistence persistence = new Persistence(databaseConfig);
 				persistence.initialize();
 				
 				// 1. JEDE Datenbank kommt in die Map, damit sie verwaltet werden kann

@@ -44,7 +44,7 @@ public class UDPService extends IntraConnectApplicationServices {
     }
 	
 	@Override
-	public void configuration(Element module, ApplicationContext context) {
+	public void configuration(Element module) {
 		if(module != null) {
 			enabled = Boolean.parseBoolean(module.getAttributeValue("enabled"));
 			if (!enabled){
