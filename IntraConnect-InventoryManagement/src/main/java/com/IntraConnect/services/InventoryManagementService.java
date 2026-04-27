@@ -1,14 +1,13 @@
 package com.IntraConnect.services;
 
 import com.IntraConnect.command.handlerReg.Register;
-import com.IntraConnect.intf.PilotApplicationServices;
+import com.IntraConnect.intf.IntraConnectApplicationServices;
 import org.jdom2.Element;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 @Service
-public class InventoryManagementService extends PilotApplicationServices {
+public class InventoryManagementService extends IntraConnectApplicationServices {
 	
 	public InventoryManagementService(Register register){
 		super(register);

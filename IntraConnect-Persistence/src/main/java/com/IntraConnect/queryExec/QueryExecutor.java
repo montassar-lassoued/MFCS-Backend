@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.*;
 
 @Component
@@ -72,6 +73,18 @@ public class QueryExecutor {
 			try (PreparedStatement ps = connection.prepareStatement(sql)) {
 				applyParameters(ps, params);
 				return ps.execute();
+			}
+		});
+	}
+	
+	public int[] executeBatch(String sql, Connection connection, List<Object[]> parameterList) {
+		return submit(() -> {
+			try (PreparedStatement ps = connection.prepareStatement(sql)) {
+				for (Object[] params : parameterList) {
+					applyParameters(ps, params);
+					ps.addBatch();
+				}
+				return ps.executeBatch();
 			}
 		});
 	}

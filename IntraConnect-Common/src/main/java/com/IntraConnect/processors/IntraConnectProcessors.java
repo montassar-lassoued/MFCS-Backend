@@ -50,7 +50,7 @@ public class IntraConnectProcessors {
 		
 		for (Element module : modules) {
 			
-			List<Element> controllers = module.getChildren("Controller");
+			List<Element> controllers = module.getChildren("Connectable");
 			
 			for (Element controller : controllers) {
 				

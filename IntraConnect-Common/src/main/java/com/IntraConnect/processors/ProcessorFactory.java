@@ -70,7 +70,7 @@ public class ProcessorFactory {
 		
 		for (Element module : modules) {
 			
-			for (Element controller : module.getChildren("Controller")) {
+			for (Element controller : module.getChildren("Connectable")) {
 				
 				String controllerName = controller.getAttributeValue("name");
 				

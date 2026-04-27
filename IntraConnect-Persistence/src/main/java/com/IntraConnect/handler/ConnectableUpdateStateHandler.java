@@ -2,9 +2,13 @@ package com.IntraConnect.handler;
 
 import com.IntraConnect.handler.records.ConnectableIntfState;
 import com.IntraConnect.queryExec.transaction.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class ConnectableUpdateStateHandler extends ConnectableStateHandler {
+	
+	private static final Logger log = LoggerFactory.getLogger(ConnectableUpdateStateHandler.class);
 	
 	@Override
 	public void handle(ConnectableIntfState payload) {
@@ -19,7 +23,7 @@ public class ConnectableUpdateStateHandler extends ConnectableStateHandler {
 					);
 					transaction.commit();
 				} catch (Exception e) {
-					throw new RuntimeException(e);
+					log.error(e.getMessage());
 				}
 			}
 		}

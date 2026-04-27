@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping(path = "/api/action")
 public interface ActionRest {
 
-    @RequestMapping(path = "/single/execute")
+    @RequestMapping("/single/execute")
     ResponseEntity<?> handleSingleRequest(@RequestBody ViewCommand cmd);
 
-    @RequestMapping(path = "list/execute")
+    @RequestMapping("list/execute")
     ResponseEntity<?> handleListRequests(@RequestBody ViewListCommand cmd);
 
-    @RequestMapping(path = "/Details")
+    @RequestMapping("/details")
     ResponseEntity<?> getViewData(@RequestBody ViewCommand cmd);
 }

@@ -3,10 +3,10 @@ package com.IntraConnect.services;
 import com.IntraConnect.UI.MenuItem;
 import com.IntraConnect.dataService.BrowserMenu;
 import com.IntraConnect.command.handlerReg.Register;
-import com.IntraConnect.intf.PilotApplicationServices;
-import com.IntraConnect.intf.PilotViewFactory;
-import com.IntraConnect.listViews.PilotView;
-import com.IntraConnect.listViews.config.PilotViewRegister;
+import com.IntraConnect.intf.IntraConnectApplicationServices;
+import com.IntraConnect.intf.IntraConnectViewFactory;
+import com.IntraConnect.listViews.IntraConnectView;
+import com.IntraConnect.listViews.config.IntraConnectViewRegister;
 import com.IntraConnect.listViews.config.ViewConfig;
 import com.IntraConnect.listViews.ViewsType;
 import com.IntraConnect.xml.Group;
@@ -16,210 +16,157 @@ import com.IntraConnect.xml.Navbar;
 import org.jdom2.Element;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class UIService extends PilotApplicationServices {
-
-    List<MenuItem> viewItems = new ArrayList<>();
-    List<BrowserMenu> browserMenus = new ArrayList<>();
-    private PilotViewRegister viewRegister;
-	boolean enabled;
+public class UIService extends IntraConnectApplicationServices {
+	
+	private final List<MenuItem> viewItems = new ArrayList<>();
+	private final List<BrowserMenu> browserMenus = new ArrayList<>();
+	private IntraConnectViewRegister viewRegister;
+	private boolean enabled;
 	
 	public UIService(Register register) {
 		super(register);
 	}
 	
 	@Override
-    public String getName() {
-        return "UI";
-    }
+	public String getName() {
+		return "UI";
+	}
 	
 	@Override
 	public void configuration(Element module, ApplicationContext context) {
-		if(module != null) {
+		if (module == null) return;
+		
+		this.enabled = Boolean.parseBoolean(module.getAttributeValue("enabled"));
+		if (!enabled) return;
+		
+		Element navBar = module.getChild("Navbar");
+		if (navBar == null) return;
+		
+		Element navBarItems = navBar.getChild("Items");
+		if (navBarItems == null) return;
+		
+		// 1. Top-Level Items parsen
+		List<Item> directItems = navBarItems.getChildren("Item").stream()
+				.map(this::parseItemElement)
+				.collect(Collectors.toCollection(ArrayList::new));
+		
+		// 2. Gruppen parsen
+		List<Group> groups = navBarItems.getChildren("Group").stream()
+				.map(grp -> {
+					List<Item> groupItems = grp.getChildren("Item").stream()
+							.map(this::parseItemElement)
+							.collect(Collectors.toCollection(ArrayList::new));
+					return new Group(
+							grp.getAttributeValue("id"),
+							grp.getAttributeValue("label"),
+							grp.getAttributeValue("color"),
+							Integer.parseInt(grp.getAttributeValue("order", "0")),
+							groupItems
+					);
+				})
+				.collect(Collectors.toCollection(ArrayList::new));
+		
+		buildBrowserMenu(new Navbar(new Items(directItems, groups)));
+	}
+	
+	private Item parseItemElement(Element el) {
+		return new Item(
+				el.getAttributeValue("id"),
+				el.getAttributeValue("label"),
+				el.getAttributeValue("color"),
+				Integer.parseInt(el.getAttributeValue("order", "0"))
+		);
+	}
+	
+	public void buildBrowserMenu(Navbar navigationBar) {
+		if (navigationBar == null) return;
+		
+		// Map Items to BrowserMenu
+		navigationBar.getItems().getItems().forEach(i ->
+				browserMenus.add(mapToBrowserMenu(i, "item", null)));
+		
+		// Map Groups to BrowserMenu
+		navigationBar.getItems().getGroups().forEach(g -> {
+			List<BrowserMenu> children = g.getItems().stream()
+					.map(i -> mapToBrowserMenu(i, "item", null))
+					.collect(Collectors.toCollection(ArrayList::new));
 			
-			enabled = Boolean.parseBoolean(module.getAttributeValue("enabled"));
-			if (!enabled){
-				return;
-			}
-			List<Group> navbar_groups = new ArrayList<>();
-			List<Item> _items = new ArrayList<>();
+			browserMenus.add(mapToBrowserMenu(g, "group", children));
+		});
+		
+		viewRegister = ViewConfig.createRegister();
+	}
+	
+	private BrowserMenu mapToBrowserMenu(Object source, String type, List<BrowserMenu> children) {
+		// Hilfsmethode um DRY zu halten (Don't Repeat Yourself)
+		if (source instanceof Item i) {
+			return new BrowserMenu(i.getId(), i.getLabel(), i.getColor(), i.getOrder(), type, null, children);
+		} else if (source instanceof Group g) {
+			return new BrowserMenu(g.getId(), g.getLabel(), g.getColor(), g.getOrder(), type, null, children);
+		}
+		return null;
+	}
+	
+	@Override
+	public void validate() {
+		if (!enabled) return;
+		
+		// Alle Factories laden
+		for (IntraConnectViewFactory factory : viewRegister.getFactories()) {
+			viewItems.addAll(factory.create().getViews());
+		}
+		
+		// Map für schnellen Zugriff erstellen (Name -> View)
+		Map<String, MenuItem> viewMap = viewItems.stream()
+				.collect(Collectors.toMap(MenuItem::getId, v -> v, (existing, replacement) -> existing));
+		
+		// Validierung und Typ-Zuweisung in einem Rutsch
+		validateAndEnrichMenus(browserMenus, viewMap);
+	}
+	
+	private void validateAndEnrichMenus(List<BrowserMenu> menus, Map<String, MenuItem> viewMap) {
+		for (BrowserMenu menu : menus) {
+			String viewID = menu.getId();
 			
-			Element navBar = module.getChild("Navbar");
-			Element navBar_items = navBar.getChild("Items");
-			List<Element> items = navBar_items.getChildren("Item");
-			for (Element item : items){
-				String id = item.getAttributeValue("id");
-				String label = item.getAttributeValue("label");
-				String navigateTo = item.getAttributeValue("navigateTo");
-				String color = item.getAttributeValue("color");
-				int order = Integer.parseInt(item.getAttributeValue("order"));
-				
-				Item _item = new Item(id, label, color, order, navigateTo);
-				_items.add(_item);
-			}
-			
-			List<Element> groups = navBar_items.getChildren("Group");
-			for (Element grp : groups){
-				
-				String g_id = grp.getAttributeValue("id");
-				String g_label = grp.getAttributeValue("label");
-				String g_color = grp.getAttributeValue("color");
-				int g_order = Integer.parseInt(grp.getAttributeValue("order"));
-				
-				List<Item> _gItems = new ArrayList<>();
-				List<Element> gItems = grp.getChildren("Item");
-				for (Element item : gItems){
-					String id = item.getAttributeValue("id");
-					String label = item.getAttributeValue("label");
-					String navigateTo = item.getAttributeValue("navigateTo");
-					String color = item.getAttributeValue("color");
-					int order = Integer.parseInt(item.getAttributeValue("order"));
-					
-					Item _item = new Item(id, label, color, order, navigateTo);
-					_gItems.add(_item);
+			if ("group".equals(menu.getMenuTyp())) {
+				if (menu.getChildren() != null) {
+					validateAndEnrichMenus(menu.getChildren(), viewMap);
 				}
-				Group group = new Group(g_id, g_label, g_color, g_order, _gItems);
-				navbar_groups.add(group);
+			} else {
+				// Prüfen ob View existiert
+				MenuItem matchedView = viewMap.get(viewID);
+				if (matchedView == null) {
+					throw new RuntimeException("Kein View mit der ID: '" + viewID + "' gefunden.");
+				}
+				// ViewTyp direkt setzen
+				menu.setViewTyp(matchedView.getView().getType());
 			}
-			
-			Navbar navbar = new Navbar(new Items(_items, navbar_groups));
-			//**
-			buildBrowserMenu(navbar);
 		}
 	}
 	
 	@Override
 	public void register() {
-	
+		//Menus
+		buildOrderBrowserMenus();
 	}
 	
-	public void buildBrowserMenu(Navbar navigationBar) {
-
-        if(navigationBar != null){
-            navigationBar.getItems().getItems().forEach(i->{
-                BrowserMenu bm = new BrowserMenu(
-                        i.getId(),
-                        i.getLabel(),
-                        i.getNavigateTo(),
-                        i.getColor(),
-                        i.getOrder(),
-                        "item",
-                        null,
-                        null
-                );
-                browserMenus.add(bm);
-            });
-            navigationBar.getItems().getGroups().forEach(group->{
-                List<BrowserMenu> childrenItems =
-                group.getItems().stream().map(
-                        i -> new BrowserMenu(
-                            i.getId(),
-                            i.getLabel(),
-                            i.getNavigateTo(),
-                            i.getColor(),
-                                i.getOrder(),
-                            "item",
-                            null,
-                            null
-                    )).collect(Collectors.toList());
-
-                BrowserMenu groupMb = new BrowserMenu(
-                        group.getId(),
-                        group.getLabel(),
-                        null,
-                        group.getColor(),
-                        group.getOrder(),
-                        "group",
-                        null,
-                        childrenItems
-                );
-
-                browserMenus.add(groupMb);
-            });
-        }
-        // views laden
-        viewRegister = ViewConfig.createRegister();
-    }
-
-
-    @Override
-    public void validate() {
-		if (!enabled){
-			return;
-		}
-        // views prüfen /vergleichen (xml-Config, Code), ob alles zusammen passt
-        // wir Laden alle Views (com.IntraConnect.views)
-        for (PilotViewFactory factory : viewRegister.getFactories()) {
-            PilotView instance = factory.create();
-            viewItems.addAll(instance.getViews());
-        }
-
-        Set<String> menuNames = viewItems.stream()
-                .map(MenuItem::getName)
-                .collect(Collectors.toSet());
-
-        for (BrowserMenu map : browserMenus) {
-            if(map.getMenuTyp().equals("group")){
-                continue;
-            }
-            String label = map.getName();
-            boolean exists = menuNames.contains(label);
-            if(!exists){
-                throw new RuntimeException("Kein View mit der Name "+label+" gefunden");
-            }
-        }
-
-        for (String itemName: menuNames){
-            boolean exists = existsInMenuItems(browserMenus, itemName, viewItems);
-            if(!exists){
-                throw new RuntimeException("Kein View mit der Name "+itemName+" gefunden");
-            }
-        }
-
-        // Wenn alles ok ist -> build Browser-Menüs
-        buildOrderBrowserMenus();
-    }
-
-    private void buildOrderBrowserMenus() {
-        // First, sort children for group menus
-        browserMenus.forEach(menu -> {
-            if ("group".equals(menu.getMenuTyp()) && menu.getChildren() != null) {
-                menu.getChildren().sort(Comparator.comparingLong(BrowserMenu::getOrder));
-            }
-        });
-        // Then, sort the top-level menus
-        browserMenus.sort(Comparator.comparingLong(BrowserMenu::getOrder));
-    }
-
-    public boolean existsInMenuItems(List<BrowserMenu> menuItems, String nameToCheck, List<MenuItem> items) {
-        for (BrowserMenu item : menuItems) {
-            if (item == null) continue;
-
-            String type = item.getMenuTyp();
-            if ("item".equals(type)) {
-                if (nameToCheck.equals(item.getName())) {
-                    // Addiere View Typ
-                    ViewsType viewsType = items.stream().filter(i->i.getName().equals(nameToCheck)).findFirst().get().getView().getType();
-                    item.setViewTyp(viewsType);
-                    return true;
-                }
-            } else if ("group".equals(type)) {
-                // Prüfe rekursiv die Kinder
-                List<BrowserMenu> children = item.getChildren();
-                if (children != null && existsInMenuItems(children, nameToCheck, items)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
+	private void buildOrderBrowserMenus() {
+		Comparator<BrowserMenu> orderComparator = Comparator.comparingLong(BrowserMenu::getOrder);
+		
+		browserMenus.forEach(menu -> {
+			if (menu.getChildren() != null) {
+				menu.getChildren().sort(orderComparator);
+			}
+		});
+		browserMenus.sort(orderComparator);
+	}
+	
     @Override
     public void run() {
 		if (!enabled){

@@ -10,5 +10,6 @@ public enum ViewsType {
     Stepper,
     Maps,
     Chip,
+	Visualization,
     NULL,
 }

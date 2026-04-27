@@ -1,19 +1,23 @@
 package com.IntraConnect.views.requests;
 
-import com.IntraConnect._enum.Request;
+import com.IntraConnect._enum.Response;
 import com.google.common.base.Strings;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import com.IntraConnect.listViews.FieldMeta;
-import com.IntraConnect.listViews.actionServices.PilotServiceSingleRequest;
+import com.IntraConnect.listViews.actionServices.IntraConnectServiceSingleRequest;
 import com.IntraConnect.listViews.fieldType.Field;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 
-public class UserAddRequest extends PilotServiceSingleRequest {
-
-    @Override
-    public Object handle(Map<String, Object> payload) {
+public class UserAddRequest extends IntraConnectServiceSingleRequest {
+	
+	private static final Logger log = LoggerFactory.getLogger(UserAddRequest.class);
+	
+	@Override
+    public Response handle(Map<String, Object> payload) {
 
         try (Transaction transaction = Transaction.create()){
             String name = (String) payload.get("Name");
@@ -22,7 +26,8 @@ public class UserAddRequest extends PilotServiceSingleRequest {
             String status = (String)payload.get("Status");
 			
 			if(Strings.isNullOrEmpty(name) || Strings.isNullOrEmpty(email) || Strings.isNullOrEmpty(rolle)){
-				return new Exception("Name kann nicht null sein");
+				log.error("{}: Name kann darf nicht leer sein",UserAddRequest.class);
+				return Response.INCOMPLETE_DATA;
 			}
 
             String query = "INSERT INTO APPUSERS (USERNAME,EMAIL, ROLE_ID, STATE)" +
@@ -33,12 +38,12 @@ public class UserAddRequest extends PilotServiceSingleRequest {
             transaction.insert(query);
 
             transaction.commit();
-
-            return Request.OK;
         }
         catch (Exception e){
-            return e.getMessage();
+            log.error(e.getMessage());
         }
+		
+		return Response.OK;
     }
 
     @Override

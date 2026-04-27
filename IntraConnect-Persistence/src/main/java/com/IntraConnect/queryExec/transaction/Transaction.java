@@ -82,6 +82,10 @@ public class Transaction implements AutoCloseable {
 		executor.insert(sql, connection, params);
 	}
 	
+	public void insertBatch(String sql, List<Object[]> parameterList) {
+		executor.executeBatch(sql, connection, parameterList);
+	}
+	
 	public void commit() {
 		try {
 			connection.commit();

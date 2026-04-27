@@ -1,6 +1,10 @@
 package com.IntraConnect._enum;
 
-public enum Request {
+public enum Response {
     OK,
-    ERROR
+    ERROR,
+	INTERNAL_SERVER_ERROR,
+	AUTHORIZATION_ERROR,
+	INCOMPLETE_DATA,
+	ACTION_NOT_ALLOWED
 }

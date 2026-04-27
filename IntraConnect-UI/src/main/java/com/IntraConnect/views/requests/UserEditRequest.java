@@ -1,18 +1,22 @@
 package com.IntraConnect.views.requests;
 
-import com.IntraConnect._enum.Request;
+import com.IntraConnect._enum.Response;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import com.IntraConnect.listViews.FieldMeta;
-import com.IntraConnect.listViews.actionServices.PilotServiceSingleRequest;
+import com.IntraConnect.listViews.actionServices.IntraConnectServiceSingleRequest;
 import com.IntraConnect.listViews.fieldType.Field;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 
-public class UserEditRequest extends PilotServiceSingleRequest {
+public class UserEditRequest extends IntraConnectServiceSingleRequest {
+	
+	private static final Logger log = LoggerFactory.getLogger(UserEditRequest.class);
 	
 	@Override
-	public Object handle(Map<String, Object> payload) {
+	public Response handle(Map<String, Object> payload) {
 		
 		try (Transaction transaction = Transaction.create()) {
 			int id = (int) payload.get("ID");
@@ -29,9 +33,10 @@ public class UserEditRequest extends PilotServiceSingleRequest {
 					"ROLE WHERE ROLE='" + rolle + "')  WHERE ID =" + id;
 			transaction.update(query);
 			transaction.commit();
-			return Request.OK;
+			return Response.OK;
 		} catch (Exception e) {
-			return e.getMessage();
+			log.error(e.getMessage());
+			return Response.INTERNAL_SERVER_ERROR;
 		}
 	}
 	

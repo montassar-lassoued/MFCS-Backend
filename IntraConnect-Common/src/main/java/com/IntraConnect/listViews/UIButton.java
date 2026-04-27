@@ -1,6 +1,6 @@
 package com.IntraConnect.listViews;
 
-import com.IntraConnect.listViews.viewBuilder.View;
+import com.IntraConnect.listViews.viewBuilder.builder.View;
 
 public class UIButton {
 

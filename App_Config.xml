@@ -1,101 +1,292 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SystemConfig>
+    <!-- Prozessoren für die Bearbeitung der empfangenen Daten -->
     <Processors>
-        <Processor name="Controller_tcp_Processor" class="com.IntraConnect.processors.Processor_tcp_Class_1"/>
+        <Processor name="Data_processing" class="com.IntraConnect.processors.DataProcessing"/>
     </Processors>
 	<Modules>
-		<Module name="Persistence" enabled="true">
+		<Module name="Persistence" enabled="true"> <!-- Hier können mehrere Datenbanken
+		eingebunden werden z.B. für Lese-, Schreibzugriff/ main für Haupt DB -->
 			<Database name="Database_Test" type="sqlserver" host="localhost\\SQLEXPRESS" port="1433" encrypt="false" main="true">
 				<Username>fight_user</Username>
 				<Password>fight_user</Password>
 			</Database>
+            <Users>  <!-- Initialer user -->
+                <User name="IntraConnect" email="Admin@IntraConnect.com" password="" role="ADMIN" />
+            </Users>
+            <Roles> <!-- Rollen werden später erweiter (Rollen/Gruppen etc..) -->
+                <Role name="ADMIN" description="" />
+                <Role name="USER" description=""  />
+            </Roles>
 		</Module>
-		<Module name="TCP" enabled="true">
-			<Controller name="Controller_1" active="false" prefix=" " suffix="">
+		<Module name="TCP" enabled="true"> <!-- Module für TCP-Verbindungen  -->
+			<Connectable name="Connectable_1" active="false" prefix=" " suffix=""> <!-- active -> Wer baut die Verbindung -->
 				<Connection>
 					<Host>localhost</Host>
 					<Port>1200</Port>
 					<Timeout>3000</Timeout>
 				</Connection>
-                <Processor name="Controller_tcp_Processor" />
-			</Controller>
-			<Controller name="Controller_2" active="true" prefix="AAA" suffix="ZZZ">
+                <Processor name="Data_processing" /> <!-- Prozessor, der Oben definiert ist   -->
+			</Connectable>
+			<Connectable name="Connectable_2" active="true" prefix="AAA" suffix="ZZZ">
 				<Connection>
 					<Host>0.0.0.0</Host>
 					<Port>1201</Port>
 					<Timeout>3000</Timeout>
 				</Connection>
-                <Processor name="Controller_tcp_Processor" />
-			</Controller>
-			<Controller name="Controller_3" active="false" prefix=" " suffix="">
+                <Processor name="Data_processing" />
+			</Connectable>
+			<Connectable name="Connectable_3" active="false" prefix=" " suffix="">
 				<Connection>
 					<Host>192.168.2.222</Host>
 					<Port>1202</Port>
 					<Timeout>3000</Timeout>
 				</Connection>
-                <Processor name="Controller_tcp_Processor" />
-			</Controller>
-			<Controller name="Controller_4" active="true" prefix=" " suffix="">
+                <Processor name="Data_processing" />
+			</Connectable>
+			<Connectable name="Connectable_4" active="true" prefix=" " suffix="">
 				<Connection>
 					<Host>0.0.0.0</Host>
 					<Port>1203</Port>
 					<Timeout>3000</Timeout>
 				</Connection>
-                <Processor name="Controller_tcp_Processor" />
-			</Controller>
+                <Processor name="Data_processing" />
+			</Connectable>
 		</Module>
-		<Module name="UDP" enabled="true">
-			<Controller name="Controller_5" active="true" prefix=" " suffix="">
+		<Module name="UDP" enabled="true"> <!-- Module für UDP-Verbindungen  -->
+			<Connectable name="Connectable_5" active="true" prefix=" " suffix="">
 				<Connection>
 					<Host>0.0.0.0</Host>
 					<Port>2100</Port>
 					<Timeout>3000</Timeout>
 				</Connection>
-                <Processor name="Controller_tcp_Processor" />
-			</Controller>
+                <Processor name="Data_processing" />
+			</Connectable>
 		</Module>
-		<Module name="UI" enabled="true">
+		<Module name="UI" enabled="true">  <!-- UI-Module -->
 			<Navbar>
-				<Items>
-					<Item id="home" label="Home" navigateTo="home" color ="#4ECDC4" order = "1" />
-					<Item id="connectable" label="Controller" navigateTo="connectable" color ="#4ECDC4" order = "2" />
-					<Item id="users" label="Users" navigateTo="users" color ="#4ECDC4" order = "4" />
-					<Group id="journal" label="Journal" color ="#4ECDC4" order = "3">
-						<Item id="transfer-in" label="Transfer-In" navigateTo="transfer-In" color ="#4ECDC4" order = "1" />
-						<Item id="transfer-out" label="Transfer-Out" navigateTo="transfer-Out" color ="#4ECDC4" order = "2" />
-                        <Item id="Transfer-Out-Card" label="Transfer-Out-Card" navigateTo="transfer-Out" color ="#4ECDC4" order = "3" />
-					</Group>
-					
+				<Items> <!-- Menüs im Browser -->
+                    <Group id="Visualization" label="Visualization" color="#2C3E50" order="1">
+                        <Item id="visualization_1" label="Ebene 1" color="#3498DB" order="1" />
+                        <Item id="visualization_2" label="Ebene 2" color="#3498DB" order="2" />
+                    </Group>
+
+                    <Item id="connectable" label="Controller" color="#16A085" order="2" />
+
+                    <Group id="journal" label="Journal" color="#D35400" order="3">
+                        <Item id="transfer-in" label="Transfer-In" color="#E67E22" order="1" />
+                        <Item id="transfer-out" label="Transfer-Out" color="#E67E22" order="2" />
+                        <Item id="transfer-in-out" label="Transfer-In-Out" color="#F39C12" order="3" />
+                    </Group>
+
+                    <Item id="users" label="Users" color="#7F8C8D" order="4" />
 				</Items>
 			</Navbar>
+            <Visualization>
+            <Visu id="visualization_1">
+                <Rects>
+                    <Rect id="R1775833946768" name="S001" x="170" y="44" width="30" height="30" controller="Connectable_1"/>
+                    <Rect id="R1775833947106" name="S002" x="367" y="46" width="30" height="30" controller="Connectable_1"/>
+                    <Rect id="R1775916124622" name="S003" x="529" y="48" width="30" height="30" controller="Connectable_1"/>
+                    <Rect id="R1775916150278" name="S004" x="852" y="110" width="30" height="30" controller="Connectable_1"/>
+                    <Rect id="R1775916186361" name="S101" x="1105" y="111" width="30" height="30" controller="Connectable_2"/>
+                    <Rect id="R1775916224107" name="S102" x="1106" y="253" width="30" height="30" controller="Connectable_2"/>
+                    <Rect id="R1775916278363" name="S201" x="855" y="381" width="30" height="30" controller="Connectable_3"/>
+                    <Rect id="R1775916301198" name="S103" x="694" y="253" width="30" height="30" controller="Connectable_2"/>
+                    <Rect id="R1775916349419" name="S300" x="371" y="451" width="30" height="30" controller="Connectable_4"/>
+                    <Rect id="R1775916434720" name="301" x="582" y="455" width="30" height="30" controller="Connectable_4"/>
+                    <Rect id="R1775916494842" name="302" x="651" y="611" width="30" height="30" controller="Connectable_4"/>
+                    <Rect id="R1775916572124" name="S350" x="603" y="728" width="128" height="56" controller="Connectable_4"/>
+                </Rects>
+                <Arrows>
+                    <Arrow id="A1775833953499" from="R1775833946768" fromSide="right" to="R1775833947106" toSide="left" type="roller" direction="S" speed="5" cost="100" waypoints=""/>
+                    <Arrow id="A1775916148270" from="R1775833947106" fromSide="right" to="R1775916124622" toSide="left" type="roller" direction="S" speed="5" cost="100" waypoints=""/>
+                    <Arrow id="A1775916173377" from="R1775916124622" fromSide="right" to="R1775916150278" toSide="top" type="roller" direction="S" speed="5" cost="100" waypoints="867,67"/>
+                    <Arrow id="A1775916203642" from="R1775916150278" fromSide="right" to="R1775916186361" toSide="left" type="roller" direction="L" speed="5" cost="100" waypoints=""/>
+                    <Arrow id="A1775916246646" from="R1775916186361" fromSide="bottom" to="R1775916224107" toSide="top" type="roller" direction="S" speed="5" cost="100" waypoints=""/>
+                    <Arrow id="A1775916293465" from="R1775916150278" fromSide="bottom" to="R1775916278363" toSide="top" type="roller" direction="S" speed="5" cost="100" waypoints=""/>
+                    <Arrow id="A1775916324453" from="R1775916224107" fromSide="left" to="R1775916301198" toSide="right" type="roller" direction="S" speed="5" cost="100" waypoints=""/>
+                    <Arrow id="A1775916362830" from="R1775833947106" fromSide="bottom" to="R1775916349419" toSide="top" type="roller" direction="R" speed="5" cost="100" waypoints="383,203;304,203;305,384;385,385"/>
+                    <Arrow id="A1775916454887" from="R1775916349419" fromSide="right" to="R1775916434720" toSide="left" type="roller" direction="S" speed="5" cost="100" waypoints=""/>
+                    <Arrow id="A1775916514747" from="R1775916301198" fromSide="bottom" to="R1775916494842" toSide="right" type="roller" direction="S" speed="5" cost="100" waypoints="710,627"/>
+                    <Arrow id="A1775916531923" from="R1775916434720" fromSide="bottom" to="R1775916494842" toSide="left" type="roller" direction="S" speed="5" cost="100" waypoints="600,626"/>
+                    <Arrow id="A1775916555084" from="R1775916124622" fromSide="bottom" to="R1775916301198" toSide="left" type="roller" direction="R" speed="5" cost="100" waypoints="545,264"/>
+                    <Arrow id="A1775916592117" from="R1775916494842" fromSide="bottom" to="R1775916572124" toSide="top" type="roller" direction="S" speed="5" cost="100" waypoints=""/>
+                    <Arrow id="A1775916609069" from="R1775916278363" fromSide="bottom" to="R1775916572124" toSide="right" type="roller" direction="S" speed="5" cost="100" waypoints=""/>
+                    <Arrow id="A1776184867543" from="R1775916278363" fromSide="left" to="R1775916572124" toSide="left" type="roller" direction="R" speed="5" cost="100" waypoints="275,664;125,731"/>
+                </Arrows>
+            </Visu>
+                <Visu id="visualization_2">
+                    <Rects>
+                        <Rect id="R1775833946768" name="fgfg" x="236" y="167" width="30" height="30" controller="Connectable_2"/>
+                        <Rect id="R1775833947106" name="fgf" x="722" y="305" width="30" height="30" controller="Connectable_1"/>
+                    </Rects>
+                    <Arrows>
+                        <Arrow id="A1775833953499" from="R1775833946768" fromSide="right" to="R1775833947106" toSide="left" type="roller" direction="straight" speed="5" cost="100" waypoints=""/>
+                    </Arrows>
+                </Visu>
+            </Visualization>
 		</Module>
+<!--		<Module name="OPC" enabled="true">-->
+<!--        </Module>-->
 <!--        <Module name="MQTT" enabled="true">-->
 <!--        </Module>-->
 <!--        <Module name="SAP" enabled="true">-->
 <!--        </Module>-->
 <!--        <Module name="NightJob" enabled="true">-->
 <!--        </Module>-->
-        <Module name="StockMovement" enabled="true">
+        <Module name="StockMovement" enabled="true"> <!-- StockMovement-Module, hier erfolgt die Definition für die Route (SPS) sowie die RBGs-->
             <Nodes>
-                <Node point="A" connectable="SPS1">
-                    <Ziel point="B" direction="L" cost="1"/>
-                    <Ziel point="D" direction="R" cost="1"/>
+                <Node point="S001" controller="Connectable_1">
+                    <Target point="S002" direction="S" cost="100"/>
                 </Node>
-
-                <Node point="B" connectable="SPS1">
-                    <Ziel point="C" direction="G" cost="1"/>
+                <Node point="S002" controller="Connectable_1">
+                    <Target point="S003" direction="S" cost="100"/>
+                    <Target point="S300" direction="R" cost="100"/>
                 </Node>
-
-                <Node point="C" connectable="SPS2">
-                    <Ziel point="Z" direction="L" cost="1"/>
+                <Node point="S003" controller="Connectable_1">
+                    <Target point="S004" direction="S" cost="100"/>
+                    <Target point="S103" direction="R" cost="100"/>
                 </Node>
-
-                <Node point="D" connectable="SPS2">
-                    <Ziel point="Z" direction="R" cost="1"/>
+                <Node point="S004" controller="Connectable_1">
+                    <Target point="S101" direction="L" cost="100"/>
+                    <Target point="S201" direction="S" cost="100"/>
                 </Node>
-
-                <Node point="Z" connectable="SPS2"/>
+                <Node point="S101" controller="Connectable_2">
+                    <Target point="S102" direction="S" cost="100"/>
+                </Node>
+                <Node point="S102" controller="Connectable_2">
+                    <Target point="S103" direction="S" cost="100"/>
+                </Node>
+                <Node point="S201" controller="Connectable_3">
+                    <Target point="S350" direction="S" cost="100"/>
+                    <Target point="S350" direction="R" cost="100"/>
+                </Node>
+                <Node point="S103" controller="Connectable_2">
+                    <Target point="302" direction="S" cost="100"/>
+                </Node>
+                <Node point="S300" controller="Connectable_4">
+                    <Target point="301" direction="S" cost="100"/>
+                </Node>
+                <Node point="301" controller="Connectable_4">
+                    <Target point="302" direction="S" cost="100"/>
+                </Node>
+                <Node point="302" controller="Connectable_4">
+                    <Target point="S350" direction="S" cost="100"/>
+                </Node>
+                <Node point="S350" controller="Connectable_4"/>
             </Nodes>
+            <StorageSystem>
+                <SRM id="SR01" pattern="GGGG-S-XXX-YY-ZZ">
+                    <Rack>
+                        <Side type="L">
+                            <Range> <!-- so ist es aufgebaut, dass es bei Bedarf Blöcke (Range)
+                        übersprungen werden können, z.B. falls diese Physisch nicht existieren-->
+                                <X start="1" end="20"/>
+                                <Y start="1" end="10"/>
+                                <Depth count="2"/>
+                                <Permission>Perm_A</Permission> <!-- Welche Loadunit-Kategorien dürfen hier rein -->
+                            </Range>
+                            <Range>
+                                <X start="23" end="40"/>
+                                <Y start="1" end="10"/>
+                                <Depth count="2"/>
+                                <Permission>Perm_B_C</Permission>
+                            </Range>
+                        </Side>
+                        <Side type="R">
+                            <Range>
+                                <X start="1" end="30"/>
+                                <Y start="1" end="10"/>
+                                <Depth count="2"/>
+                                <Permission>Perm_A_B</Permission>
+                            </Range>
+                            <Range>
+                                <X start="30" end="40"/>
+                                <Y start="1" end="10"/>
+                                <Depth count="2"/>
+                                <Permission>Perm_C</Permission>
+                            </Range>
+                        </Side>
+                    </Rack>
+                    <Forks> <!-- Gabel mit Ein-/Auslagern Points-->
+                        <Fork name="LHD01*">
+                            <EntryPoints>
+                                <Entry>S350</Entry>
+                            </EntryPoints>
+                            <ExitPoins>
+                                <Exit>S350</Exit>
+                            </ExitPoins>
+                        </Fork>
+                    </Forks>
+                </SRM>
+                <SRM id="SR02" pattern="GGGG-S-XXX-YY-ZZ">
+                    <Rack>
+                        <Side type="L">
+                            <Range> <!-- so ist es aufgebaut, dass es bei Bedarf Blöcke (Range)
+                        übersprungen werden können, z.B. falls diese Physisch nicht existieren-->
+                                <X start="1" end="20"/>
+                                <Y start="1" end="10"/>
+                                <Depth count="2"/>
+                                <Permission>Perm_A</Permission> <!-- Welche Loadunit-Kategorien dürfen hier rein -->
+                            </Range>
+                            <Range>
+                                <X start="23" end="40"/>
+                                <Y start="1" end="10"/>
+                                <Depth count="2"/>
+                                <Permission>Perm_B_C</Permission>
+                            </Range>
+                        </Side>
+                        <Side type="R">
+                            <Range>
+                                <X start="1" end="30"/>
+                                <Y start="1" end="10"/>
+                                <Depth count="2"/>
+                                <Permission>Perm_A_B</Permission>
+                            </Range>
+                            <Range>
+                                <X start="30" end="40"/>
+                                <Y start="1" end="10"/>
+                                <Depth count="2"/>
+                                <Permission>Perm_C</Permission>
+                            </Range>
+                        </Side>
+                    </Rack>
+                    <Forks> <!-- Gabel mit Ein-/Auslagern Points-->
+                        <Fork name="LHD01*">
+                            <EntryPoints>
+                                <Entry>S350</Entry>
+                            </EntryPoints>
+                            <ExitPoins>
+                                <Exit>S350</Exit>
+                            </ExitPoins>
+                        </Fork>
+                    </Forks>
+                </SRM>
+            </StorageSystem>
+            <Loadunit> <!-- Loadunit, Definitionen für die Kategorien -->
+                <Categories>
+                    <Categorie name="A" height="1300" width="3000" length="1000" minWeight="1000" maxWeight="5000" />
+                    <Categorie name="B" height="1500" width="3000" length="1000" minWeight="1000" maxWeight="5000" />
+                    <Categorie name="C" height="1300" width="3200" length="1500" minWeight="1000" maxWeight="5000" />
+                </Categories>
+                <Permissions> <!-- für die Fächer (beim Einlagern wichtig) -->
+                  <Permission name="Perm_A"> <!-- erlaubt nur Categorie A -->
+                        <Categorie>A</Categorie>
+                    </Permission>
+                    <Permission name="Perm_A_B"> <!-- erlaubt Categorie A & B -->
+                        <Categorie>A</Categorie>
+                        <Categorie>B</Categorie>
+                    </Permission>
+                    <Permission name="Perm_B_C"> <!-- erlaubt Categorie B & C -->
+                        <Categorie>B</Categorie>
+                        <Categorie>C</Categorie>
+                    </Permission>
+                    <Permission name="Perm_B_C"> <!-- erlaubt nur Categorie C -->
+                        <Categorie>C</Categorie>
+                    </Permission>
+                </Permissions>
+            </Loadunit>
         </Module>
         <Module name="InventoryManagement" enabled="true">
         </Module>

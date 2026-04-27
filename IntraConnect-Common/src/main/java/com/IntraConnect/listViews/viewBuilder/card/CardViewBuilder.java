@@ -1,12 +1,13 @@
-package com.IntraConnect.listViews.viewBuilder;
+package com.IntraConnect.listViews.viewBuilder.card;
 
 import com.IntraConnect.listViews.ViewsType;
+import com.IntraConnect.listViews.viewBuilder.builder.AbstractIntraConnectDetailsViewBuilder;
 
 public final class CardViewBuilder
-        extends AbstractPilotDetailsViewBuilder {
+        extends AbstractIntraConnectDetailsViewBuilder {
 
 
-    CardViewBuilder() {
+    public CardViewBuilder() {
         super(ViewsType.Card);
     }
 

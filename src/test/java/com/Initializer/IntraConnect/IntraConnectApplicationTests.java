@@ -1,4 +1,4 @@
-package com.IntraConnect.Base_Pilot;
+package com.IntraConnect.Base_IntraConnect;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

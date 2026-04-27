@@ -2,11 +2,11 @@ package com.IntraConnect.intf;
 
 import com.IntraConnect.command.handlerReg.Register;
 
-public abstract class PilotCoreServices implements PilotServices {
+public abstract class IntraConnectCoreServices implements IntraConnectServices {
 	
 	protected final Register register;
 	
-	protected PilotCoreServices(Register register) {
+	protected IntraConnectCoreServices(Register register) {
 		this.register = register;
 	}
 	

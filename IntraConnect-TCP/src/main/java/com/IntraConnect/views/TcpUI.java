@@ -5,56 +5,56 @@ import com.IntraConnect.views.requests.ControllerDetails;
 import com.IntraConnect.views.requests.DataReprocess;
 import com.IntraConnect.views.requests.DeleteController;
 import com.IntraConnect.views.requests.ReconnectController;
-import com.IntraConnect.intf.PilotViewFactory;
+import com.IntraConnect.intf.IntraConnectViewFactory;
 import com.IntraConnect.listViews.Buttons;
-import com.IntraConnect.listViews.PilotView;
-import com.IntraConnect.listViews.viewBuilder.PilotViewDetails;
+import com.IntraConnect.listViews.IntraConnectView;
+import com.IntraConnect.listViews.viewBuilder.builder.IntraConnectViewDetails;
 
 import java.util.List;
 
 
-public class TcpUI extends PilotView {
+public class TcpUI extends IntraConnectView {
 
     @Override
     public List<MenuItem> listViews() {
 
         List<MenuItem> items = List.of(
-                new MenuItem("Controller", createTableController()),
-                new MenuItem("Transfer-In",createTransferInController()),
-                new MenuItem("Transfer-Out", createTransferOutController()),
-                new MenuItem("Transfer-Out-Card", createTransferOutCARD())
+                new MenuItem("connectable", createTableController()),
+                new MenuItem("transfer-in",createTransferInController()),
+                new MenuItem("transfer-out", createTransferOutController()),
+                new MenuItem("transfer-in-out", createTransferInOut())
         );
 
         return items;
     }
 
-    private PilotViewDetails createTransferInController() {
+    private IntraConnectViewDetails createTransferInController() {
 
         String query= "SELECT TRANSFER_IN.ID, CONTROLLER.NAME, TRANSFER_IN._date, TRANSFER_IN.processed, TRANSFER_IN.content " +
                 "FROM TRANSFER_IN LEFT JOIN CONTROLLER ON (CONTROLLER.ID = TRANSFER_IN.CONTROLLER_ID)";
 
-        return PilotViewDetails.tableView()
+        return IntraConnectViewDetails.tableView()
                 .query(query)
                 .addViewButton(Buttons.CUSTOM,"Erneut-verarbeiten", new DataReprocess())
                 .build();
     }
-    private PilotViewDetails createTransferOutController() {
+    private IntraConnectViewDetails createTransferOutController() {
 
         String query= "SELECT TRANSFER_OUT.ID, CONTROLLER.NAME, TRANSFER_OUT._date, TRANSFER_OUT.processed, TRANSFER_OUT.content " +
                 "FROM TRANSFER_OUT LEFT JOIN CONTROLLER ON (CONTROLLER.ID = TRANSFER_OUT.CONTROLLER_ID)";
 
-        return PilotViewDetails.tableView()
+        return IntraConnectViewDetails.tableView()
                 .query(query)
                 .addViewButton(Buttons.CUSTOM,"Erneut verarbeiten", new DataReprocess())
                 .build();
     }
 
-    private PilotViewDetails createTransferOutCARD() {
+    private IntraConnectViewDetails createTransferInOut() {
 
         String query= "SELECT TRANSFER_OUT.ID, CONTROLLER.NAME, TRANSFER_OUT._date, TRANSFER_OUT.processed, TRANSFER_OUT.content " +
                 "FROM TRANSFER_OUT LEFT JOIN CONTROLLER ON (CONTROLLER.ID = TRANSFER_OUT.CONTROLLER_ID)";
 
-        return PilotViewDetails.cardView()
+        return IntraConnectViewDetails.tableView()
                 .query(query)
                 .addOpenDetailsButton("Details", new ControllerDetails())
                 .addViewButton(Buttons.CUSTOM,"Custom 1", new DataReprocess())
@@ -62,11 +62,11 @@ public class TcpUI extends PilotView {
                 .build();
     }
 
-    private PilotViewDetails createTableController() {
+    private IntraConnectViewDetails createTableController() {
 
         String query= "SELECT ID, NAME, DESCRIPTION, CONNECTED FROM CONTROLLER";
 
-        return PilotViewDetails.tableView()
+        return IntraConnectViewDetails.tableView()
                 .query(query)
                 .addOpenDetailsButton("detail", new ControllerDetails())
                 .addDeleteDetailsButton("Delete", new DeleteController())
@@ -75,7 +75,7 @@ public class TcpUI extends PilotView {
     }
 
     @Override
-    public PilotViewFactory getClassType() {
+    public IntraConnectViewFactory getClassType() {
         return TcpUI::new;
     }
 }

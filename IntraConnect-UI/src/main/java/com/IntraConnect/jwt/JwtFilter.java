@@ -23,9 +23,7 @@ public class JwtFilter extends OncePerRequestFilter {
     JwtUtil jwtUtil;
     @Autowired
     private CustomUserDetailsService userDetailsService;
-
-    private String username = null;
-    private Claims claims = null;
+	
 
 
     @Override
@@ -34,21 +32,23 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain
     ) throws ServletException, IOException {
 
-        if(request.getServletPath().matches("^/(user/login|user/signup|user/forgotPassword)$")){
+        if(request.getServletPath().matches("^/(user/login|user/signup|user/forgotPassword)$")
+				|| request.getServletPath().startsWith("/ws-visu/")){
             filterChain.doFilter(request, response);
         }
         else {
             String authorizationHeader = request.getHeader("Authorization");
             String token = null;
-            if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")){
+			String username= null;
+			
+			if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")){
                 token = authorizationHeader.substring(7);
 
                 if(token.isBlank()){
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token fehlt");
                     return;
                 }
-                username = jwtUtil.extractUsername(token);
-                claims = jwtUtil.extractAllClaims(token);
+				username = jwtUtil.extractUsername(token);
             }
             if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -64,16 +64,15 @@ public class JwtFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         }
     }
-
-    public boolean isAdmin(){
-        return "admin".equalsIgnoreCase((String) claims.get("role"));
-    }
-
-    public boolean isUser(){
-        return "user".equalsIgnoreCase((String) claims.get("role"));
-    }
-
-    public String getCurrentUser(){
-        return username;
-    }
+	
+	public String getCurrentUser() {
+		var auth = SecurityContextHolder.getContext().getAuthentication();
+		return (auth != null) ? auth.getName() : null;
+	}
+	
+	public boolean isAdmin() {
+		var auth = SecurityContextHolder.getContext().getAuthentication();
+		return auth != null && auth.getAuthorities().stream()
+				.anyMatch(a -> a.getAuthority().equalsIgnoreCase("ADMIN"));
+	}
 }

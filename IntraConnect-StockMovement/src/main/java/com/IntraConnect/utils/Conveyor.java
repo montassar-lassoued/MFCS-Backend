@@ -1,9 +1,8 @@
 package com.IntraConnect.utils;
 
-import com.IntraConnect.nodes.Edge;
-import com.IntraConnect.nodes.Graph;
-import com.IntraConnect.nodes.NextStep;
-import com.IntraConnect.nodes.Node;
+import com.IntraConnect.path.nodes.Edge;
+import com.IntraConnect.path.nodes.Graph;
+import com.IntraConnect.path.nodes.Node;
 
 public class Conveyor {
 	

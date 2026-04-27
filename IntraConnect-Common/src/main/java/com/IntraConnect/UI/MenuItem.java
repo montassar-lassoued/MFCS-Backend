@@ -1,19 +1,20 @@
 package com.IntraConnect.UI;
 
-import com.IntraConnect.listViews.viewBuilder.PilotViewDetails;
+import com.IntraConnect.listViews.viewBuilder.builder.IntraConnectViewDetails;
 
 public class MenuItem {
-    private final String name;
-    private final PilotViewDetails view;
+	private final String id;
+    private final IntraConnectViewDetails view;
 
 
-    public MenuItem(String name, PilotViewDetails view) {
-        this.name = name;
+    public MenuItem(String id, IntraConnectViewDetails view) {
         this.view = view;
+		this.id = id;
     }
-
-    public String getName() {
-        return name;
-    }
-    public PilotViewDetails getView(){return this.view;}
+	
+	public String getId() {
+		return id;
+	}
+	
+    public IntraConnectViewDetails getView(){return this.view;}
 }

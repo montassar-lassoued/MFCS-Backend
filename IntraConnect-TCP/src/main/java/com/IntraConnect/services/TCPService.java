@@ -7,13 +7,12 @@ import com.IntraConnect.async.server.TcpServerEngine;
 import com.IntraConnect.command.handlerReg.Register;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import com.IntraConnect.helper.Console;
-import com.IntraConnect.intf.PilotApplicationServices;
+import com.IntraConnect.intf.IntraConnectApplicationServices;
 import com.IntraConnect.tcpController.TcpController;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 import com.IntraConnect.xml.ConnectionConfig;
 import com.IntraConnect.xml.ControllerConfig;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,7 @@ import java.util.List;
 
 
 @Service
-public class TCPService extends PilotApplicationServices {
+public class TCPService extends IntraConnectApplicationServices {
 
     List<Connectable> _connectables = new ArrayList<>();
 	private final ControllerRegistry controllerRegistry;
@@ -59,7 +58,7 @@ public class TCPService extends PilotApplicationServices {
 				return;
 			}
 			
-			List<Element> controllers = module.getChildren("Controller");
+			List<Element> controllers = module.getChildren("Connectable");
 			for (Element controller : controllers) {
 				
 				String name = controller.getAttributeValue("name");
@@ -82,11 +81,6 @@ public class TCPService extends PilotApplicationServices {
 	}
 	
 	@Override
-	public void register() {
-	
-	}
-	
-	@Override
     public void validate() {
 		if (!enabled){
 			return;
@@ -102,11 +96,17 @@ public class TCPService extends PilotApplicationServices {
                 }
             }
         }
+    }
+	
+	@Override
+	public void register() {
+		// Handler registrieren
+		
 		//Controller registrieren
 		controllerRegistry.register(_connectables);
-        // Alles ok, wir können nun die Controller in die datenbank anlegen
-        InitializeDatabaseTableController();
-    }
+		// Alles ok, wir können nun die Controller in die datenbank anlegen
+		InitializeDatabaseTableController();
+	}
 
     private void InitializeDatabaseTableController() {
         try(Transaction transaction = Transaction.create()){

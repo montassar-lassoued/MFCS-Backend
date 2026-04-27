@@ -1,7 +1,7 @@
 
 CREATE TABLE Controller (
     id BIGINT IDENTITY(1,1) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) UNIQUE,
     description VARCHAR(255),
     connected bit
 );

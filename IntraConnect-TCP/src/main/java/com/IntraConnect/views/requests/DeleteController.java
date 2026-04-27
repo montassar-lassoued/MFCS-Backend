@@ -1,21 +1,18 @@
 package com.IntraConnect.views.requests;
 
+import com.IntraConnect._enum.Response;
 import com.IntraConnect.listViews.FieldMeta;
-import com.IntraConnect.listViews.actionServices.PilotServiceSingleRequest;
+import com.IntraConnect.listViews.actionServices.IntraConnectServiceSingleRequest;
 
 import java.util.List;
 import java.util.Map;
 
-public class DeleteController extends PilotServiceSingleRequest {
+public class DeleteController extends IntraConnectServiceSingleRequest {
 
 
     @Override
-    public Object handle(Map<String, Object> payload) {
-        return null;
+    public Response handle(Map<String, Object> payload) {
+        return Response.ACTION_NOT_ALLOWED;
     }
-
-    @Override
-    public List<FieldMeta> viewData() {
-        return List.of();
-    }
+	
 }

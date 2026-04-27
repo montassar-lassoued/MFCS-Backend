@@ -29,7 +29,7 @@ public class ControllerMessageScheduler {
 		this.controllerRegistry = controllerRegistry;
 	}
 	
-	@Scheduled(fixedRate = 2000)
+	@Scheduled(fixedRate = 2000, initialDelay = 5000)
 	public void sendScheduledMessages() {
 		Map<String, Connectable> controllerMap = controllerRegistry.getAllControllers().stream()
 				.collect(Collectors.toMap(Connectable::getName, c -> c, (a, b) -> a));

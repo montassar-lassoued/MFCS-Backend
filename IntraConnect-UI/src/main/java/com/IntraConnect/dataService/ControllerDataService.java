@@ -1,11 +1,16 @@
 package com.IntraConnect.dataService;
 
 import com.IntraConnect.UI.MenuItem;
+import com.IntraConnect.listViews.ViewsType;
+import com.IntraConnect.listViews.viewBuilder.builder.IntraConnectTableDetails;
+import com.IntraConnect.listViews.viewBuilder.visualization.VisualizationViewBuilder;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import com.IntraConnect.listViews.FieldMeta;
 import com.IntraConnect.listViews.UIButton;
 import com.IntraConnect.listViews.fieldType.Field;
-import com.IntraConnect.listViews.viewBuilder.PilotViewDetails;
+import com.IntraConnect.listViews.viewBuilder.builder.IntraConnectViewDetails;
+import com.IntraConnect.visualization.VisuConverterService;
+import com.IntraConnect.visualization.VisuData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,120 +27,133 @@ public class ControllerDataService {
 
     @Autowired
     List<MenuItem> viewItems;
-    private List<FieldMeta> metadata_g = new ArrayList<>();
+	@Autowired
+	private VisualizationService visualizationService;
 
     public List<BrowserMenu> getBrowserMenus() {
         return BrowserMenus;
     }
 
     public Map<String, Object> getViewData(String menu) {
-        String query = getQueryFromMap(menu);
-        if (query.isBlank()) {
-            return new LinkedHashMap<>();
-        }
-        Map<String, Object> viewData = new LinkedHashMap<>();
-        List<Map<String, Object>> data = getData(query, menu);
-        List<UIButton> viewButtons = getViewButtons(menu);
-        viewData.put("rows", data);
-        viewData.put("meta", metadata_g);
-        viewData.put("detailsActions", getDetailsButtons(menu));
-        viewData.put("viewActions", viewButtons);
-
-        return viewData;
+		
+		// 1. Hole das MenuItem und die Details (Buttons, Typ etc.)
+		MenuItem menuItem = viewItems.stream()
+				.filter(vi -> vi.getId().equalsIgnoreCase(menu))
+				.findFirst()
+				.orElseThrow(() -> new NoSuchElementException("Menu nicht gefunden: " + menu));
+		
+		Map<String, Object> viewData = new LinkedHashMap<>();
+		IntraConnectViewDetails details = menuItem.getView();
+		
+		if(details.getType().equals(ViewsType.Visualization)) {
+			// Die Daten der Visu als VisuData-Objekt holen
+			viewData.put("visu", visualizationService.getVisuElement(menu));
+			
+		} else if (details instanceof IntraConnectTableDetails tableDetails) {
+			// Datenbank query holen
+			String query = tableDetails.getQuery();
+			if (query != null &&!query.isBlank()) {
+				
+				QueryResult result = executeQuery(query);
+				
+				viewData.put("rows", result.rows());
+				viewData.put("meta", result.meta());
+				viewData.put("detailsActions", tableDetails.buildDetailsButtons());
+				
+				// Metadaten im Objekt speichern
+				tableDetails.setMetadata(result.meta());
+			}
+			
+		}
+		List<UIButton> viewButtons = getViewButtons(menu);
+		viewData.put("viewActions", viewButtons);
+		
+		return viewData;
     }
-
-    private List<Map<String, Object>> getData(String query, String menu) {
-
-        try (Transaction transaction = Transaction.create()) {
-            ResultSet rs = transaction.select(query);
-            // Meta-Daten -> Merken
-            saveViewMetaData(menu, rs);
-            // Daten holen, falls keine dann nur die
-            // Columns, dass die Views nicht leer bleiben
-            return data(rs, menu);
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private List<Map<String, Object>> data(ResultSet rs, String menu) throws SQLException {
-       List<Map<String, Object>> rows = new ArrayList<>();
-        int cols = rs.getMetaData().getColumnCount();
-        // dass die erste Zeile nicht übersprungen wird
-        boolean hasRow = rs.next();
-        if(!hasRow){
-            return null;
-        }
-        do {
-            Map<String, Object> row = new LinkedHashMap<>();
-            for (int i = 1; i <= cols; i++) {
-                String columnName = rs.getMetaData().getColumnName(i);
-                Object value = rs.getObject(i);
-
-                row.put(columnName, value);
-            }
-            rows.add(row);
-
-        } while (rs.next());
-
-        return rows;
-    }
-
-    private void saveViewMetaData(String name, ResultSet rs) throws SQLException {
-        Optional<MenuItem> menu = viewItems.stream().filter(vi -> vi.getName().equalsIgnoreCase(name)).findFirst();
-        if (menu.isPresent()) {
-            PilotViewDetails viewDetails = menu.get().getView();
-            List<FieldMeta> metadata = getViewMetaData(rs);
-            viewDetails.setMetadata(metadata);
-            metadata_g = metadata;
-        }
-    }
-
-    private List<FieldMeta> getViewMetaData(ResultSet rs) throws SQLException {
-        List<FieldMeta> metadaten= new ArrayList<>();
-        int cols = rs.getMetaData().getColumnCount();
-        for (int i = 1; i <= cols; i++) {
-            String columnName = rs.getMetaData().getColumnName(i);
-            boolean nullable = rs.getMetaData().isNullable(i) == ResultSetMetaData.columnNullable;
-            boolean visible = !columnName.equalsIgnoreCase("id");
-            Field columnType = switch (rs.getMetaData().getColumnTypeName(i)) {
-                case "int", "bigint", "decimal" -> Field.NUMBER;
-                case "bit" -> Field.CHECKBOX;
-                case "text", "ntext" -> Field.TEXT_AREA;
-                case "date" -> Field.DATE;
-                case "datetime", "datetime2" -> Field.DATETIME;
-                case "time" -> Field.TIME;
-                case "float", "real" -> Field.NUMBER_ANY;
-                default -> Field.TEXT_FIELD;
-            };
-            //**Für Metadaten
-            metadaten.add(
-                    FieldMeta.of(columnName)
-                            .editable(true)
-                            .visible(visible)
-                            .nullable(nullable)
-                            .type(columnType)
-            );
-        }
-        return metadaten;
-    }
-
-    private String getQueryFromMap(String name) {
-        Optional<MenuItem> menu = viewItems.stream().filter(vi -> vi.getName().equalsIgnoreCase(name)).findFirst();
-        if (menu.isPresent()) {
-            return menu.get().getView().getQuery();
-        }
-        return "";
-    }
-
+	
+	private QueryResult executeQuery(String query) {
+		try (Transaction transaction = Transaction.create()) {
+			ResultSet rs = transaction.select(query);
+			ResultSetMetaData rsmd = rs.getMetaData();
+			
+			// Metadaten einmalig extrahieren
+			List<FieldMeta> meta = extractMeta(rsmd);
+			// Daten extrahieren
+			List<Map<String, Object>> rows = extractRows(rs, rsmd);
+			
+			return new QueryResult(rows, meta);
+		} catch (Exception e) {
+			throw new RuntimeException("Fehler bei SQL-Ausführung", e);
+		}
+	}
+	
+	private List<FieldMeta> extractMeta(ResultSetMetaData rsmd) throws SQLException {
+		List<FieldMeta> metaList = new ArrayList<>();
+		int columnCount = rsmd.getColumnCount();
+		
+		for (int i = 1; i <= columnCount; i++) {
+			String colName = rsmd.getColumnName(i);
+			String typeName = rsmd.getColumnTypeName(i).toLowerCase();
+			
+			Field fieldType = mapSqlTypeToField(typeName);
+			boolean isNullable = rsmd.isNullable(i) == ResultSetMetaData.columnNullable;
+			
+			metaList.add(FieldMeta.of(colName)
+					.editable(true)
+					.visible(!colName.equalsIgnoreCase("id"))
+					.nullable(isNullable)
+					.type(fieldType));
+		}
+		return metaList;
+	}
+	
+	private List<Map<String, Object>> extractRows(ResultSet rs, ResultSetMetaData rsmd) throws SQLException {
+		List<Map<String, Object>> rows = new ArrayList<>();
+		int columnCount = rsmd.getColumnCount();
+		
+		while (rs.next()) {
+			Map<String, Object> row = new LinkedHashMap<>();
+			for (int i = 1; i <= columnCount; i++) {
+				row.put(rsmd.getColumnName(i), rs.getObject(i));
+			}
+			rows.add(row);
+		}
+		return rows;
+	}
+	
+	private Field mapSqlTypeToField(String typeName) {
+		return switch (typeName) {
+			case "int", "bigint", "decimal" -> Field.NUMBER;
+			case "bit", "boolean" -> Field.CHECKBOX;
+			case "text", "ntext", "varchar", "nvarchar" -> Field.TEXT_AREA;
+			case "date" -> Field.DATE;
+			case "datetime", "datetime2", "timestamp" -> Field.DATETIME;
+			case "time" -> Field.TIME;
+			case "float", "real", "double" -> Field.NUMBER_ANY;
+			default -> Field.TEXT_FIELD;
+		};
+	}
+	
+	// Hilfs-Record für den internen Datentransfer
+	private record QueryResult(List<Map<String, Object>> rows, List<FieldMeta> meta) {}
+	
     private List<UIButton> getDetailsButtons(String name) {
-        Optional<MenuItem> menu = viewItems.stream().filter(vi -> vi.getName().equalsIgnoreCase(name)).findFirst();
-        return menu.map(menuItem -> menuItem.getView().buildDetailsButtons()).orElse(null);
+		Optional<MenuItem> menu = viewItems.stream()
+				.filter(vi -> vi.getId().equalsIgnoreCase(name))
+				.findFirst();
+		
+		if (menu.isPresent()) {
+			IntraConnectViewDetails details = menu.get().getView();
+			// Nur Table/Cards haben Details-Buttons (Zeilen-Aktionen)
+			if (details instanceof IntraConnectTableDetails tableDetails) {
+				return tableDetails.buildDetailsButtons();
+			}
+		}
+		return null;
     }
 
     private List<UIButton> getViewButtons(String name) {
-        Optional<MenuItem> menu = viewItems.stream().filter(vi -> vi.getName().equalsIgnoreCase(name)).findFirst();
+        Optional<MenuItem> menu = viewItems.stream().filter(vi -> vi.getId().equalsIgnoreCase(name)).findFirst();
         return menu.map(menuItem -> menuItem.getView().buildMainButtons()).orElse(null);
     }
 }

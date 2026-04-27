@@ -1,10 +1,9 @@
 package com.IntraConnect.intf;
 
-import com.IntraConnect.command.handlerReg.Register;
 import org.springframework.context.ApplicationContext;
 import org.jdom2.Element;
 
-public interface PilotServices {
+public interface IntraConnectServices {
 	String getName();
 	
 	void configuration(Element root, ApplicationContext context);

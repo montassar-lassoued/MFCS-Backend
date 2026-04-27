@@ -1,16 +1,18 @@
-package com.IntraConnect.listViews.viewBuilder;
+package com.IntraConnect.listViews.viewBuilder.dashboard;
 
 import com.IntraConnect.listViews.ViewsType;
+import com.IntraConnect.listViews.viewBuilder.builder.AbstractIntraConnectViewBuilder;
+import com.IntraConnect.listViews.viewBuilder.builder.IntraConnectViewDetails;
 
-import java.util.List;
-
-public class DashboardViewBuilder extends AbstractPilotViewBuilder<DashboardViewBuilder> {
+public class DashboardViewBuilder extends AbstractIntraConnectViewBuilder<DashboardViewBuilder> {
 
     protected DashboardViewBuilder() {
         super(ViewsType.Dashbord);
     }
-
-    public PilotViewDetails build() {
-        return build();
-    }
+	
+	
+	@Override
+	public IntraConnectViewDetails build() {
+		return new DashboardViewDetail(viewButtons);
+	}
 }

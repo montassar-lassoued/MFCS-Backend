@@ -1,11 +1,12 @@
-package com.IntraConnect.listViews.viewBuilder;
+package com.IntraConnect.listViews.viewBuilder.table;
 
 import com.IntraConnect.listViews.ViewsType;
+import com.IntraConnect.listViews.viewBuilder.builder.AbstractIntraConnectDetailsViewBuilder;
 
 public final class TableViewBuilder
-        extends AbstractPilotDetailsViewBuilder {
+        extends AbstractIntraConnectDetailsViewBuilder {
 
-    TableViewBuilder() {
+    public TableViewBuilder() {
         super(ViewsType.Table);
     }
 

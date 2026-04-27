@@ -7,7 +7,6 @@ import java.util.List;
 public class BrowserMenu{
     String id;
     String name;
-    String url;
     String color;
     int order;
     String menuTyp;
@@ -16,7 +15,6 @@ public class BrowserMenu{
 
     public BrowserMenu( String id,
                         String name,
-                        String url,
                         String color,
                         int order,
                         String menuTyp,
@@ -25,7 +23,6 @@ public class BrowserMenu{
 
         setId(id);
         setName(name);
-        setUrl(url);
         setColor(color);
         setOrder(order);
         setMenuTyp(menuTyp);
@@ -48,14 +45,6 @@ public class BrowserMenu{
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
     }
 
     public String getColor() {

@@ -2,15 +2,14 @@ package com.IntraConnect.handler;
 
 import com.IntraConnect._enum.LuState;
 import com.IntraConnect.intf.Handler;
-import com.IntraConnect.nodes.Graph;
-import com.IntraConnect.nodes.LoadUnitPath;
-import com.IntraConnect.nodes.NextStep;
+import com.IntraConnect.path.nodes.Graph;
+import com.IntraConnect.path.nodes.LoadUnitPath;
+import com.IntraConnect.path.nodes.NextStep;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import com.IntraConnect.record.LoadUnitPathTrigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.sql.ResultSet;
 
 public class LoadUnitPathTriggerHandler implements Handler<LoadUnitPathTrigger> {

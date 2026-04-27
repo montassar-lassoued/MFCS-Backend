@@ -13,15 +13,19 @@ import java.util.Map;
 @RequestMapping(path = "/user")
 public interface UserRest {
 
+	/** wird nicht benutzt - im securityFilterChain in raus */
     @PostMapping(path = "/signup")
     public ResponseEntity<String> signup(@RequestBody(required = true)Map<String,String> requestMap);
 
     @PostMapping(path = "/login")
     public ResponseEntity<String> login(@RequestBody(required = true)Map<String,String> requestMap);
-
+	
+	/** wird nicht benutzt - im securityFilterChain in raus */
     @GetMapping(path = "/get")
     public ResponseEntity<List<User>> getAllUser();
 	
+	/** wird nicht benutzt - im securityFilterChain in raus.
+	 * Logout erfolg im Frontend */
 	@PostMapping(path = "/logout")
 	public ResponseEntity<String> logout();
 }

@@ -7,11 +7,10 @@ import com.IntraConnect.command.handlerReg.Register;
 import com.IntraConnect.messageEngine.ControllerRegistry;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import com.IntraConnect.helper.Console;
-import com.IntraConnect.intf.PilotApplicationServices;
+import com.IntraConnect.intf.IntraConnectApplicationServices;
 import com.IntraConnect.udpController.UdpController;
 import org.jdom2.Element;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 import com.IntraConnect.xml.ConnectionConfig;
 import com.IntraConnect.xml.ControllerConfig;
 import org.springframework.stereotype.Service;
@@ -23,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class UDPService extends PilotApplicationServices {
+public class UDPService extends IntraConnectApplicationServices {
 	
 	List<Connectable> _connectables = new ArrayList<>();
 	private final UdpServerEngine udpServerEngine;
@@ -52,7 +51,7 @@ public class UDPService extends PilotApplicationServices {
 				return;
 			}
 			
-			List<Element> controllers = module.getChildren("Controller");
+			List<Element> controllers = module.getChildren("Connectable");
 			for (Element controller : controllers) {
 				
 				String name = controller.getAttributeValue("name");

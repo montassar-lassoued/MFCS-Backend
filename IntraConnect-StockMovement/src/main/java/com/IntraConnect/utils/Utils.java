@@ -1,8 +1,8 @@
 package com.IntraConnect.utils;
 
 import com.IntraConnect._enum.LuState;
-import com.IntraConnect.nodes.Graph;
-import com.IntraConnect.nodes.Node;
+import com.IntraConnect.path.nodes.Graph;
+import com.IntraConnect.path.nodes.Node;
 import com.IntraConnect.queryExec.transaction.Transaction;
 import java.sql.ResultSet;
 import java.sql.SQLException;

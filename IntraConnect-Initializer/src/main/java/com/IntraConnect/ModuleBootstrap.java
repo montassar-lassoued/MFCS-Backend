@@ -2,14 +2,10 @@ package com.IntraConnect;
 
 import com.IntraConnect._enum.LifecyclePhase;
 import com.IntraConnect.helper.Console;
-import com.IntraConnect.intf.PilotServices;
-import com.IntraConnect.processors.IntraConnectProcessors;
+import com.IntraConnect.intf.IntraConnectServices;
 import com.IntraConnect.processors.ProcessorFactory;
 import org.jdom2.Element;
-import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -22,22 +18,22 @@ import static com.IntraConnect._enum.LifecyclePhase.*;
 public class ModuleBootstrap {
 	
 	private final Element systemConfig;
-	private final List<PilotServices> pilotServices;
+	private final List<IntraConnectServices> intraConnectServices;
 	private final ApplicationContext context;
-	private Map<PilotServices, Element> moduleConfigMap;
-	private Map<String, PilotServices> registry;
-	List<PilotServices> activeModules;
+	private Map<IntraConnectServices, Element> moduleConfigMap;
+	private Map<String, IntraConnectServices> registry;
+	List<IntraConnectServices> activeModules;
 	//private final IntraConnectProcessors intraConnectProcessors;
 	private final ProcessorFactory processorFactory;
 	
 	public ModuleBootstrap(
 			Element systemConfig,
-			List<PilotServices> pilotServices,
+			List<IntraConnectServices> intraConnectServices,
 			ApplicationContext context,
 			ProcessorFactory processorFactory) {
 		
 		this.systemConfig = systemConfig;
-		this.pilotServices = pilotServices;
+		this.intraConnectServices = intraConnectServices;
 		this.context = context;
 		this.processorFactory = processorFactory;
 	}
@@ -49,7 +45,7 @@ public class ModuleBootstrap {
 		activeModules = resolveActiveModules();
 		
 		// PHASE 1 – CONFIGURE
-		for (PilotServices module : activeModules) {
+		for (IntraConnectServices module : activeModules) {
 			Console.info.println("Configuring: " + module.getName());
 			executePhase(CONFIGURE, module);
 			Console.info.println(" - OK");
@@ -69,7 +65,7 @@ public class ModuleBootstrap {
 		Console.info.println("Processors ready.");
 		
 		// PHASE 2 – RUN
-		for (PilotServices module : activeModules) {
+		for (IntraConnectServices module : activeModules) {
 			Console.info.println("Running: " + module.getName());
 			executePhase(RUN, module);
 			Console.info.println(" - OK");
@@ -78,14 +74,14 @@ public class ModuleBootstrap {
 	
 	public void shutdown(){
 		// PHASE – SHUTDOWN
-		for (PilotServices module : activeModules) {
+		for (IntraConnectServices module : activeModules) {
 			Console.info.println("Shutdown: " + module.getName());
 			executePhase(SHUTDOWN, module);
 			Console.info.println(" - OK");
 		}
 	}
 	
-	private void executePhase(LifecyclePhase phase, PilotServices module){
+	private void executePhase(LifecyclePhase phase, IntraConnectServices module){
 		switch (phase){
 			case CONFIGURE -> module.configuration(moduleConfigMap.get(module), context);
 			case VALIDATE -> module.validate();
@@ -95,9 +91,9 @@ public class ModuleBootstrap {
 		}
 	}
 	
-	private List<PilotServices> resolveActiveModules() throws RuntimeException{
+	private List<IntraConnectServices> resolveActiveModules() throws RuntimeException{
 		
-		List<PilotServices> result = new ArrayList<>();
+		List<IntraConnectServices> result = new ArrayList<>();
 		moduleConfigMap = new LinkedHashMap<>();
 		
 		List<Element> modules = systemConfig
@@ -113,10 +109,10 @@ public class ModuleBootstrap {
 				continue;
 			}
 			
-			PilotServices service = registry.get(name.toLowerCase());
+			IntraConnectServices service = registry.get(name.toLowerCase());
 			if (service == null) {
 				System.out.println(Thread.currentThread().getName());
-				Console.error.println("FATAL: No PilotService registered for: " + name);
+				Console.error.println("FATAL: No IntraConnect-Service registered for: " + name);
 				System.exit(1);
 			}
 
@@ -128,7 +124,7 @@ public class ModuleBootstrap {
 	}
 	
 	private void buildRegistry() {
-		registry = pilotServices.stream()
+		registry = intraConnectServices.stream()
 				.collect(Collectors.toMap(
 						s -> s.getName().toLowerCase(Locale.ROOT),
 						Function.identity()

@@ -1,28 +1,21 @@
 package com.IntraConnect.services;
 
-import com.IntraConnect.command.handlerReg.time.NoTimeTrigger;
-import com.IntraConnect.command.trigger.Trigger;
+
 import com.IntraConnect.handler.*;
 import com.IntraConnect.command.handlerReg.Register;
-import com.IntraConnect.command.handlerReg.time.FixedRateTrigger;
-import com.IntraConnect.intf.PilotApplicationServices;
-import com.IntraConnect.listener.InsertEventListener;
-import com.IntraConnect.listner.LoadUnitCreateListener;
-import com.IntraConnect.nodes.*;
-import com.IntraConnect.record.LoadUnitCreate;
-import com.IntraConnect.utils.LoadUnit;
+import com.IntraConnect.intf.IntraConnectApplicationServices;
+import com.IntraConnect.storageConfig.PathConfig;
+import com.IntraConnect.storageConfig.StorageSystemConfig;
 import org.jdom2.Element;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @Service
-public class StockMovementService extends PilotApplicationServices {
+public class StockMovementService extends IntraConnectApplicationServices {
+	
+	StorageSystemConfig storageSystemConfig;
+	
+	PathConfig pathConfig;
 	boolean enabled;
 	
 	public StockMovementService(Register register){
@@ -37,7 +30,6 @@ public class StockMovementService extends PilotApplicationServices {
 	@Override
 	public void configuration(Element module, ApplicationContext context) {
 		
-		Map<String, Node> graph = new HashMap<>();
 		if(module != null) {
 			enabled = Boolean.parseBoolean(module.getAttributeValue("enabled"));
 			if (!enabled){
@@ -45,39 +37,29 @@ public class StockMovementService extends PilotApplicationServices {
 			}
 			
 			Element elNodes = module.getChild("Nodes");
-			List<Element> nodes = elNodes.getChildren("Node");
-			for (Element point : nodes) {
-				
-				//***** Attribute
-				String name = point.getAttributeValue("point");
-				String controller = point.getAttributeValue("controller");
-				
-				Node node = new Node(name, controller);
-				
-				//******* Ziele
-				List<Edge> edges = new ArrayList<>();
-				List<Element> targets = point.getChildren("Ziel");
-				for (Element target: targets){
-					
-					String tName = target.getAttributeValue("point");
-					String tDirection = target.getAttributeValue("direction");
-					int tCost = Integer.parseInt(target.getAttributeValue("cost", "100"));
-					
-					edges.add(new Edge(tName,tDirection, tCost));
-				}
-				node.setEdges(edges);
-				
-				graph.put(node.getPoint(), node);
-			}
+			pathConfig = new PathConfig();
+			pathConfig.load(elNodes);
+			
+			
+			
+			/** Storage Systeme**/
+			Element elStorage = module.getChild("StorageSystem");
+			storageSystemConfig = new StorageSystemConfig();
+			storageSystemConfig.load(elStorage);
 		}
-		
-		Graph.register(graph);
+		// Node: entrypoint -edges: SR01*
 //
-//		NextStep step = LoadUnitPath.calculateNextStep(Graph.get(), "A", "Z");
+ 		//NextStep step = LoadUnitPath.calculateNextStep(Graph.get(), "A", "K");
 //
-//		System.out.println(step.getController());  // SPS1 / SPS2 / ...
+ //		System.out.println(step.getController());  // SPS1 / SPS2 / ...
 //		System.out.println(step.getDirection());   // Links / Rechts / Gerade
 //		System.out.println(step.getNextTarget());    // nächstes Ziel
+	}
+	
+	@Override
+	public void validate() {
+		pathConfig.validate();
+		storageSystemConfig.validate();
 	}
 	
 	@Override
@@ -90,11 +72,10 @@ public class StockMovementService extends PilotApplicationServices {
 		register.registerHandler(LoadUnitSetLocationDestinationHandler.class);
 		// DB-Listeners
 		// register.addListener("LoadUnit", new LoadUnitCreateListener());
-	}
-	
-	@Override
-	public void validate() {
-	
+		//Konfiguration
+		// Path: A->B->C;B->D->F
+		pathConfig.register();
+		storageSystemConfig.register();
 	}
 	
 	@Override

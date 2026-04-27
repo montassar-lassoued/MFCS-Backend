@@ -62,10 +62,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseEntity<String> login(Map<String, String> requestMap) {
         log.info("Inside login{}", requestMap);
+		
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(requestMap.get("email"),requestMap.get("password"))
             );
+			
             if(authentication.isAuthenticated()){
                 return new ResponseEntity<String>("{\"token\":\""+
                         jwtUtil.generateToken(
@@ -136,9 +138,9 @@ public class UserServiceImpl implements UserService {
 
     private boolean existsUserByEmail(String email){
         boolean exist = false;
-        String query = "SELECT * FROM APPUSERS WHERE EMAIL = '" + email + "'";
+        String query = "SELECT * FROM APPUSERS WHERE EMAIL = ?";
         try(Transaction transaction = Transaction.create()){
-            ResultSet rs = transaction.select(query);
+            ResultSet rs = transaction.select(query, email);
             if(rs.next()){
               exist = true;
             }

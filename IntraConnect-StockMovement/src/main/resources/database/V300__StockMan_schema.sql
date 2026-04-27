@@ -42,6 +42,14 @@ CREATE TABLE Journal_Roadway (
     created DATETIME2 NOT NULL DEFAULT SYSDATETIME()
 );
 
+CREATE TABLE Points (
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    type VARCHAR(100) NOT NULL,
+    blocked BIT,
+    date_blocked DATETIME2 ,
+);
+
 -- Constraints
 ALTER TABLE [dbo].[LoadUnit_Roadway] WITH CHECK ADD CONSTRAINT [FK_LoadUnit_Roadway] FOREIGN KEY([loadUnit_ID])
 REFERENCES [dbo].[LoadUnit]([id]);

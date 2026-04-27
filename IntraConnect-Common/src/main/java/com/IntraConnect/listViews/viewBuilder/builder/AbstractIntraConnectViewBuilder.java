@@ -30,7 +30,7 @@ public abstract class AbstractIntraConnectViewBuilder <T extends AbstractIntraCo
         return self();
     }
 
-    public T addViewButton(Buttons button, String label, IntraConnectServiceRequest requestService) {
+    public T addViewButton(Buttons button, String label, IntraConnectServiceRequest<?> requestService) {
         viewButtons.add(new ViewButton(button,label, requestService));
         return self();
     }

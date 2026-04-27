@@ -1,6 +1,7 @@
 package com.IntraConnect.restImpl;
 
 
+import com.IntraConnect.FrontendBroker.service.VisuPushService;
 import com.IntraConnect.UI.MenuItem;
 import com.IntraConnect.dataService.BrowserMenu;
 import com.IntraConnect.dataService.ControllerDataService;
@@ -16,6 +17,8 @@ public class ApiRestImpl implements ApiRest {
 
     @Autowired
     private ControllerDataService controllerDataService;
+	@Autowired
+	private VisuPushService visuPushService;
     @Autowired
     List<MenuItem> viewItems;
 
@@ -26,6 +29,15 @@ public class ApiRestImpl implements ApiRest {
 
     @Override
     public Map<String, Object> menu(String name) {
+		/*if(name.equals("visualization")) {
+		// Beispiel LUs im Frontend zu bewegen
+		
+			visuPushService.publishLuMovement("132", "S001", "LEFT_RECT", "S");
+			visuPushService.publishLuMovement("133", "S003", "LEFT_RECT", "L");
+			visuPushService.publishLuMovement("320", "S201", "LEFT_RECT", "R");
+			visuPushService.publishLuMovement("321", "S201", "LEFT_RECT", "L");
+			visuPushService.publishLuMovement("322", "S201", "LEFT_RECT", "S");
+		}*/
         return controllerDataService.getViewData(name);
     }
 }

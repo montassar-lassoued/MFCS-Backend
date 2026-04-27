@@ -1,25 +1,25 @@
 package com.IntraConnect.listViews.config;
 
-import com.IntraConnect.intf.PilotViewFactory;
+import com.IntraConnect.intf.IntraConnectViewFactory;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
-import com.IntraConnect.listViews.PilotView;
+import com.IntraConnect.listViews.IntraConnectView;
 
 import java.lang.reflect.InvocationTargetException;
 
 public class ViewConfig {
 
-    public static PilotViewRegister createRegister() {
+    public static IntraConnectViewRegister createRegister() {
 
-        PilotViewRegister register = new PilotViewRegister();
+        IntraConnectViewRegister register = new IntraConnectViewRegister();
 
         try (ScanResult scan = new ClassGraph()
                 .enableClassInfo()
                 .acceptPackages("com.IntraConnect.views")   // <-- Package!
                 .scan()) {
 
-            for (ClassInfo info : scan.getSubclasses(PilotView.class.getName())) {
+            for (ClassInfo info : scan.getSubclasses(IntraConnectView.class.getName())) {
 
                 Class<?> cls = info.loadClass();
                 Object instance = cls.getDeclaredConstructor().newInstance();
@@ -30,7 +30,7 @@ public class ViewConfig {
                 Object factoryObj = factoryMethod.invoke(instance);
 
                 // Cast zur Factory
-                PilotViewFactory factory = (PilotViewFactory) factoryObj;
+                IntraConnectViewFactory factory = (IntraConnectViewFactory) factoryObj;
 
                 // View-Factory registrieren
                 register.addFactory(factory);

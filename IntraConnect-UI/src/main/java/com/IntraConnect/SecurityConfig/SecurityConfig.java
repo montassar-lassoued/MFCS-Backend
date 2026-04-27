@@ -33,11 +33,21 @@ public class SecurityConfig {
                 .cors(c-> new CorsConfiguration().applyPermitDefaultValues())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
-                        .requestMatchers("/user/login","/user/signup","/user/logout","/user/get").permitAll()
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/user/**").hasRole("USER")
-                        .anyRequest().authenticated()
+						// Statische Ressourcen & WebSocket
+						.requestMatchers("/css/**", "/js/**", "/images/**", "/ws-visu/**").permitAll()
+						
+						// Auth-Endpunkte
+						.requestMatchers("/user/login","/user/get").permitAll()
+						
+						// Die API für Aktionen
+						.requestMatchers("/api/action/**").permitAll()
+						
+						// Rollenbasierte Regeln
+						.requestMatchers("/admin/**").hasRole("ADMIN")
+						.requestMatchers("/user/**").hasRole("USER")
+						
+						// Alles andere muss authentifiziert sein
+						.anyRequest().authenticated()
                 )
 
                 .exceptionHandling(ex -> ex
@@ -70,6 +80,7 @@ public class SecurityConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins("http://localhost:4200")
+						.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedMethods("*")
 						.allowCredentials(true);
             }

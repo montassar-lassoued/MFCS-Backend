@@ -1,19 +1,20 @@
 package com.IntraConnect.views;
 
 import com.IntraConnect.listViews.Buttons;
-import com.IntraConnect.listViews.PilotView;
+import com.IntraConnect.listViews.IntraConnectView;
 import com.IntraConnect.views.requests.UserAddRequest;
+import com.IntraConnect.views.requests.UserDeleteRequest;
 import com.IntraConnect.views.requests.UserEditRequest;
-import com.IntraConnect.intf.PilotViewFactory;
+import com.IntraConnect.intf.IntraConnectViewFactory;
 import com.IntraConnect.UI.MenuItem;
-import com.IntraConnect.listViews.viewBuilder.PilotViewDetails;
+import com.IntraConnect.listViews.viewBuilder.builder.IntraConnectViewDetails;
 
 import java.util.List;
 
-public class UI extends PilotView {
+public class UI extends IntraConnectView {
 
     @Override
-    public PilotViewFactory getClassType() {
+    public IntraConnectViewFactory getClassType() {
         return UI::new;
     }
 
@@ -21,14 +22,14 @@ public class UI extends PilotView {
     public List<MenuItem> listViews() {
 
         List<MenuItem> items = List.of(
-                new MenuItem("Users", createCardsUser()),
-                new MenuItem("Home", createHomePage())
+                new MenuItem("users", createCardsUser())
+                //new MenuItem("home", createHomePage())
 
         );
         return items;
     }
 
-    private PilotViewDetails createCardsUser() {
+    private IntraConnectViewDetails createCardsUser() {
         String query ="SELECT APPUSERS.ID, " +
                 "APPUSERS.USERNAME as Name, " +
                 "APPUSERS.EMAIL as EMail, " +
@@ -38,24 +39,15 @@ public class UI extends PilotView {
                 "LEFT JOIN ROLE ON (APPUSERS.ROLE_ID = ROLE.ID)";
 
 
-        return PilotViewDetails.cardView()
+        return IntraConnectViewDetails.cardView()
                 .query(query)
                 .addEditDetailsButton("",new UserEditRequest())
-                .addViewButton(Buttons.CREATE,"add", new UserAddRequest())
+				.addDeleteDetailsButton("", new UserDeleteRequest())
+                .addViewButton(Buttons.CREATE,"add user", new UserAddRequest())
+				
                 //.addViewButton(Buttons.EDIT,"edit", new UserEditRequest())
                 .build();
 
     }
-    private PilotViewDetails createHomePage() {
-        String query ="SELECT APPUSERS.ID, " +
-                "APPUSERS.USERNAME as name, " +
-                "APPUSERS.EMAIL, " +
-                "ROLE.ROLE, " +
-                "APPUSERS.STATE " +
-                "FROM APPUSERS " +
-                "LEFT JOIN ROLE ON (APPUSERS.ROLE_ID = ROLE.ID)";
-        return PilotViewDetails.cardView()
-                .query(query)
-                .build();
-    }
+  
 }

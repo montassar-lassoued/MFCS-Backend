@@ -1,4 +1,4 @@
-package com.IntraConnect.listViews.viewBuilder;
+package com.IntraConnect.listViews.viewBuilder.builder;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

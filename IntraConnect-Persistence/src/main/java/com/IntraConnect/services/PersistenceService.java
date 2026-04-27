@@ -1,27 +1,26 @@
 package com.IntraConnect.services;
 
 import com.IntraConnect.command.handlerReg.time.FixedRateTrigger;
-import com.IntraConnect.command.handlerReg.time.TriggerTime;
 import com.IntraConnect.dispatcher.dbListner.DatabaseChangeDispatcher;
 import com.IntraConnect.command.handlerReg.Register;
 import com.IntraConnect.dispatcher.processors.TransferInDispatcher;
 import com.IntraConnect.handler.ConnectableStateHandler;
 import com.IntraConnect.persistence.Persistence;
 import com.IntraConnect.helper.Console;
-import com.IntraConnect.intf.PilotCoreServices;
+import com.IntraConnect.intf.IntraConnectCoreServices;
+import com.IntraConnect.queryExec.transaction.Transaction;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
 import com.IntraConnect.xml.DatabaseConfig;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
-public class PersistenceService extends PilotCoreServices {
+public class PersistenceService extends IntraConnectCoreServices {
 	
 	private static final Logger log = LoggerFactory.getLogger(PersistenceService.class);
 
@@ -29,6 +28,8 @@ public class PersistenceService extends PilotCoreServices {
 	private final HashMap<String, Persistence> Databases = new HashMap<>();
 	private Persistence mainDatabase ;
 	private boolean enabled;
+	private List<User> users = new ArrayList<>();
+	private List<Object[]> userRoles = new ArrayList<>();
 	@Autowired
 	private DatabaseChangeDispatcher databaseChangeDispatcher;
 	@Autowired
@@ -50,7 +51,7 @@ public class PersistenceService extends PilotCoreServices {
 			if (!enabled) {
 				return;
 			}
-			int main =0;
+
 			List<Element> databases = module.getChildren("Database");
 			for (Element database : databases) {
 				DatabaseConfig databaseConfig = new DatabaseConfig();
@@ -91,14 +92,29 @@ public class PersistenceService extends PilotCoreServices {
 				// Optional: Falls die erste Datenbank automatisch "main" sein soll, wenn nichts definiert ist:
 				// if (!Databases.isEmpty()) this.mainDatabase = Databases.values().iterator().next();
 				// ODER (sicherer) Fehler werfen:
-				log.warn("No main database defined in configuration!");
+				throw new RuntimeException("No main database defined in configuration!");
+			}
+			
+			Element elUsers = module.getChild("Users");
+			List<Element> elUserList = elUsers.getChildren("User");
+			for (Element elUser : elUserList){
+				String name = elUser.getAttributeValue("name");
+				String email = elUser.getAttributeValue("email");
+				String password = elUser.getAttributeValue("password");
+				String role = elUser.getAttributeValue("role");
+				
+				users.add(new User(name,email,password,role));
+			}
+			
+			Element elRoles = module.getChild("Roles");
+			List<Element> elRoleList = elRoles.getChildren("Role");
+			for (Element elRole : elRoleList){
+				String name = elRole.getAttributeValue("name");
+				String description = elRole.getAttributeValue("description");
+				
+				userRoles.add(new Object[]{name, description});
 			}
 		}
-	}
-	
-	@Override
-	public void register() {
-		register.registerHandler(ConnectableStateHandler.class, new FixedRateTrigger(1000));
 	}
 	
 	@Override
@@ -114,6 +130,36 @@ public class PersistenceService extends PilotCoreServices {
 				throw new RuntimeException("can't connect to Database '" + p.getDatabaseName() + "'");
 			}
 			Console.info.println("Database '" + p.getDatabaseName() + "' is connected");
+		}
+	}
+	
+	@Override
+	public void register() {
+		//Handlers
+		register.registerHandler(ConnectableStateHandler.class);
+		//Users
+		addLoginUsers();
+	}
+	
+	private void addLoginUsers() {
+		try (Transaction transaction = Transaction.create()){
+			
+			int countR = transaction.queryCount("SELECT COUNT(*) FROM ROLE");
+			if (countR <1) {
+				String sqlRole = "INSERT INTO ROLE (ROLE, DESCRIPTION) VALUES (?,?)";
+				transaction.insertBatch(sqlRole, userRoles);
+			}
+			int countU = transaction.queryCount("SELECT COUNT(*) FROM APPUSERS");
+			if (countU <1) {
+				String sql = "INSERT INTO APPUSERS (USERNAME, EMAIL, PASSWORD, ROLE_ID) " +
+						"VALUES (?, ?, ?, (SELECT ID FROM ROLE WHERE ROLE = ?))";
+				for (User user :users){
+					transaction.insert(sql, user.username, user.email,user.password, user.role);
+				}
+			}
+			transaction.commit();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 	
