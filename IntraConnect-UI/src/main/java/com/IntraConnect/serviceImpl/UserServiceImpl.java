@@ -156,10 +156,10 @@ public class UserServiceImpl implements UserService {
                 "'"+requestMap.get("name")+"'," +
                 "'"+requestMap.get("email")+"'," +
                 "'"+requestMap.get("password")+"'," +
-                "(SELECT ID FROM ROLE WHERE ROLE = '"+requestMap.get("role")+"'),'-')";
+                "(SELECT ID FROM ROLE WHERE ROLE = ?),'-')";
 
         try(Transaction transaction = Transaction.create()){
-            transaction.insert(query);
+            transaction.insert(query, requestMap.get("role"));
             transaction.commit();
         }catch (Exception e){
             log.error(e.getMessage());
