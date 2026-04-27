@@ -17,9 +17,7 @@ import java.util.function.Function;
 
 @Service
 public class JwtUtil {
-
-    /*private final String secret= "MCtJdRxC7EYXYMMTdlGSg7ZhpszneEkXZSfSjBnpG9Z";
-    private final Key key = Keys.hmacShaKeyFor(secret.getBytes());*/
+	
 	private final Key key;
 	// Spring sucht nach einer Umgebungsvariable namens JWT_SECRET
 	// oder einem Eintrag jwt.secret in den Properties.

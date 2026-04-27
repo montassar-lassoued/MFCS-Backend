@@ -135,34 +135,34 @@ public class UserServiceImpl implements UserService {
         return requestMap.containsKey("name") && requestMap.containsKey("email")
                 && requestMap.containsKey("password") && requestMap.containsKey("role");
     }
+	
+	private boolean existsUserByEmail(String email) {
 
-    private boolean existsUserByEmail(String email){
-        boolean exist = false;
-        String query = "SELECT * FROM APPUSERS WHERE EMAIL = ?";
-        try(Transaction transaction = Transaction.create()){
-            ResultSet rs = transaction.select(query, email);
-            if(rs.next()){
-              exist = true;
-            }
-        }catch (Exception e){
-            log.error(e.getMessage());
-        }
-        return exist;
-    }
-    private void saveUser(Map<String, String> requestMap){
-
-        String query = "INSERT INTO APPUSERS (USERNAME, EMAIL,PASSWORD, ROLE_ID,STATE) " +
-                "VALUES (" +
-                "'"+requestMap.get("name")+"'," +
-                "'"+requestMap.get("email")+"'," +
-                "'"+requestMap.get("password")+"'," +
-                "(SELECT ID FROM ROLE WHERE ROLE = ?),'-')";
-
-        try(Transaction transaction = Transaction.create()){
-            transaction.insert(query, requestMap.get("role"));
-            transaction.commit();
-        }catch (Exception e){
-            log.error(e.getMessage());
-        }
-    }
+		String query = "SELECT 1 FROM APPUSERS WHERE EMAIL = ?";
+		
+		try (Transaction transaction = Transaction.create()) {
+			return transaction.exists(query,email);
+		} catch (Exception e) {
+			log.error("Fehler beim Prüfen der Email: ", e);
+		}
+		return false;
+	}
+	
+	private void saveUser(Map<String, String> requestMap) {
+		String query = "INSERT INTO APPUSERS (USERNAME, EMAIL, PASSWORD, ROLE_ID, STATE) " +
+				"VALUES (?, ?, ?, (SELECT ID FROM ROLE WHERE ROLE = ?), '-')";
+		
+		try (Transaction transaction = Transaction.create()) {
+			// Passwörter sollten hier gehasht werden (siehe Schritt 2)
+			transaction.insert(query,
+					requestMap.get("name"),
+					requestMap.get("email"),
+					requestMap.get("password"),
+					requestMap.get("role")
+			);
+			transaction.commit();
+		} catch (Exception e) {
+			log.error("Fehler beim Speichern des Users: ", e);
+		}
+	}
 }
