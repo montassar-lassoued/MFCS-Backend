@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import com.IntraConnect.xml.DatabaseConfig;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -34,6 +35,8 @@ public class PersistenceService extends IntraConnectCoreServices {
 	private DatabaseChangeDispatcher databaseChangeDispatcher;
 	@Autowired
 	private TransferInDispatcher transferInDispatcher;
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 	
 	public PersistenceService(Register register) {
 		super(register);
@@ -154,7 +157,12 @@ public class PersistenceService extends IntraConnectCoreServices {
 				String sql = "INSERT INTO APPUSERS (USERNAME, EMAIL, PASSWORD, ROLE_ID) " +
 						"VALUES (?, ?, ?, (SELECT ID FROM ROLE WHERE ROLE = ?))";
 				for (User user :users){
-					transaction.insert(sql, user.username, user.email,user.password, user.role);
+					String password = passwordEncoder.encode(user.getPassword());
+					transaction.insert(sql,
+							user.getUsername(),
+							user.getEmail(),
+							password,
+							user.getRole());
 				}
 			}
 			transaction.commit();
