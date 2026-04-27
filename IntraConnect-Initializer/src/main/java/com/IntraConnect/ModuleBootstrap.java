@@ -2,6 +2,7 @@ package com.IntraConnect;
 
 import com.IntraConnect._enum.LifecyclePhase;
 import com.IntraConnect.helper.Console;
+import com.IntraConnect.intf.IntraConnectCoreServices;
 import com.IntraConnect.intf.IntraConnectServices;
 import com.IntraConnect.processors.ProcessorFactory;
 import org.jdom2.Element;
@@ -19,22 +20,18 @@ public class ModuleBootstrap {
 	
 	private final Element systemConfig;
 	private final List<IntraConnectServices> intraConnectServices;
-	private final ApplicationContext context;
 	private Map<IntraConnectServices, Element> moduleConfigMap;
 	private Map<String, IntraConnectServices> registry;
 	List<IntraConnectServices> activeModules;
-	//private final IntraConnectProcessors intraConnectProcessors;
 	private final ProcessorFactory processorFactory;
 	
 	public ModuleBootstrap(
 			Element systemConfig,
 			List<IntraConnectServices> intraConnectServices,
-			ApplicationContext context,
 			ProcessorFactory processorFactory) {
 		
 		this.systemConfig = systemConfig;
 		this.intraConnectServices = intraConnectServices;
-		this.context = context;
 		this.processorFactory = processorFactory;
 	}
 	
@@ -120,7 +117,10 @@ public class ModuleBootstrap {
 			moduleConfigMap.put(service, moduleElement);
 		}
 		
-		return result;
+		// Wir Sortierung so, dass die CoreServices zuerst ausgeführt werden (z.B. Persistence)
+		return result.stream()
+				.sorted(Comparator.comparing(s -> !(s instanceof IntraConnectCoreServices)))
+				.collect(Collectors.toList());
 	}
 	
 	private void buildRegistry() {
