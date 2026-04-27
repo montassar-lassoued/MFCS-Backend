@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.sql.ResultSet;
@@ -37,6 +40,8 @@ public class UserServiceImpl implements UserService {
     JwtUtil jwtUtil;
     @Autowired
     JwtFilter jwtFilter;
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
     @Override
     public ResponseEntity<String> signup(Map<String, String> requestMap) {
@@ -58,33 +63,33 @@ public class UserServiceImpl implements UserService {
         }
         return Utils.getResponseEntity(INVALID_DATA, HttpStatus.BAD_REQUEST);
     }
-
-    @Override
-    public ResponseEntity<String> login(Map<String, String> requestMap) {
-        log.info("Inside login{}", requestMap);
-		
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(requestMap.get("email"),requestMap.get("password"))
-            );
+	
+	@Override
+	public ResponseEntity<String> login(Map<String, String> requestMap) {
+		try {
+			Authentication authentication = authenticationManager.authenticate(
+					new UsernamePasswordAuthenticationToken(requestMap.get("email"), requestMap.get("password"))
+			);
 			
-            if(authentication.isAuthenticated()){
-                return new ResponseEntity<String>("{\"token\":\""+
-                        jwtUtil.generateToken(
-                                customUserDetailsService.getUser().getEmail(),
-                                customUserDetailsService.getUser().getRole())+"\"}",
-                HttpStatus.OK);
-            }
-            else {
-                return new ResponseEntity<String>("{\"message\":\""+" Waite for admin approval."+"\"}",
-                        HttpStatus.BAD_REQUEST);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-        return new ResponseEntity<String>("{\"message\":\""+" Bad credential."+"\"}",
-                HttpStatus.BAD_REQUEST);
-    }
+			if(authentication.isAuthenticated()){
+				// Hol dir den Principal (das UserDetails Objekt, das wir oben gebaut haben)
+				UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+				
+				// Extrahiere die Rolle (Spring Security speichert sie in Authorities)
+				String role = userDetails.getAuthorities().stream()
+						.map(auth -> auth.getAuthority().replace("ROLE_", "")) // "ROLE_ADMIN" -> "ADMIN"
+						.findFirst()
+						.orElse("USER");
+				
+				String token = jwtUtil.generateToken(userDetails.getUsername(), role);
+				
+				return new ResponseEntity<>("{\"token\":\"" + token + "\"}", HttpStatus.OK);
+			}
+		} catch (Exception e) {
+			log.error("Login fehlgeschlagen: {}", e.getMessage());
+		}
+		return new ResponseEntity<>("{\"message\":\"Bad credentials.\"}", HttpStatus.BAD_REQUEST);
+	}
 	
 	@Override
 	public ResponseEntity<String> logout(Map<String, String> requestMap) {
@@ -96,7 +101,11 @@ public class UserServiceImpl implements UserService {
         log.info("Inside getAllUser");
         try {
             List<User> users = new ArrayList<>();
-            if(jwtFilter.isAdmin()){
+			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+			boolean isAdmin = auth.getAuthorities().stream()
+					.anyMatch(a -> a.getAuthority().equals("ADMIN"));
+			
+            if(isAdmin){
 
                 String query = "SELECT " +
                         "APPUSERS.USERNAME, " +
@@ -153,11 +162,12 @@ public class UserServiceImpl implements UserService {
 				"VALUES (?, ?, ?, (SELECT ID FROM ROLE WHERE ROLE = ?), '-')";
 		
 		try (Transaction transaction = Transaction.create()) {
-			// Passwörter sollten hier gehasht werden (siehe Schritt 2)
+			String encodedPassword = passwordEncoder.encode(requestMap.get("password"));
+			
 			transaction.insert(query,
 					requestMap.get("name"),
 					requestMap.get("email"),
-					requestMap.get("password"),
+					encodedPassword,
 					requestMap.get("role")
 			);
 			transaction.commit();
