@@ -115,6 +115,11 @@
                     <Arrow id="A1775916609069" from="R1775916278363" fromSide="bottom" to="R1775916572124" toSide="right" type="roller" direction="S" speed="5" cost="100" waypoints=""/>
                     <Arrow id="A1776184867543" from="R1775916278363" fromSide="left" to="R1775916572124" toSide="left" type="roller" direction="R" speed="5" cost="100" waypoints="275,664;125,731"/>
                 </Arrows>
+                <Aisles>
+                    <Aisle id="G1777393150767" name="Gasse 1" x="1344" y="360" width="200" height="40" orientation="horizontal">
+                        <RBG id="RBG1777393150767" positionOffset="0.2" width="20" height="30"/>
+                    </Aisle>
+                </Aisles>
             </Visu>
                 <Visu id="visualization_2">
                     <Rects>

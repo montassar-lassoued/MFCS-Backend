@@ -16,8 +16,43 @@ public class VisuConverterService {
 		VisuData data = new VisuData();
 		data.rects = parseRects(doc.getElementsByTagName("Rect"));
 		data.arrows = parseArrows(doc.getElementsByTagName("Arrow"));
+		data.aisles = parseAisles(doc.getElementsByTagName("Aisle"));
 		
 		return data;
+	}
+	
+	private List<AisleDto> parseAisles(NodeList aisle) {
+		List<AisleDto> aisleDtos = new ArrayList<>();
+		for (int i = 0; i < aisle.getLength(); i++) {
+			Element el = (Element) aisle.item(i);
+			AisleDto a = new AisleDto();
+			a.id = el.getAttribute("id");
+			a.name = el.getAttribute("name");
+			a.x = Double.parseDouble(el.getAttribute("x"));
+			a.y = Double.parseDouble(el.getAttribute("y"));
+			a.width = Double.parseDouble(el.getAttribute("width"));
+			a.height = Double.parseDouble(el.getAttribute("height"));
+			a.orientation = el.getAttribute("orientation");
+			
+			a.rbg = parseRbgs(el.getElementsByTagName("RBG"));
+			
+			aisleDtos.add(a);
+		}
+		return aisleDtos;
+
+	}
+	
+	private Rbg parseRbgs(NodeList rbg) {
+		Rbg r = new Rbg();
+		for (int i = 0; i < rbg.getLength(); i++) {
+			Element el = (Element) rbg.item(i);
+			r.id = el.getAttribute("id");
+			r.name = el.getAttribute("name");
+			r.positionOffset = Double.parseDouble(el.getAttribute("positionOffset"));
+			r.width = Double.parseDouble(el.getAttribute("width"));
+			r.height = Double.parseDouble(el.getAttribute("height"));
+		}
+		return r;
 	}
 	
 	private List<RectDto> parseRects(NodeList list) {

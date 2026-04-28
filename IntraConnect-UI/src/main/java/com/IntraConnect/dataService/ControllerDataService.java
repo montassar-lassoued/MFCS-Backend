@@ -11,6 +11,8 @@ import com.IntraConnect.listViews.fieldType.Field;
 import com.IntraConnect.listViews.viewBuilder.builder.IntraConnectViewDetails;
 import com.IntraConnect.visualization.VisuConverterService;
 import com.IntraConnect.visualization.VisuData;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -67,6 +69,20 @@ public class ControllerDataService {
 		}
 		List<UIButton> viewButtons = getViewButtons(menu);
 		viewData.put("viewActions", viewButtons);
+		
+		
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			// Macht das JSON schön lesbar (mit Einrückungen)
+			mapper.enable(SerializationFeature.INDENT_OUTPUT);
+			
+			String json = mapper.writeValueAsString(viewData);
+			System.out.println("--- DEBUG VIEWDATA JSON ---");
+			System.out.println(json);
+			System.out.println("---------------------------");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		return viewData;
     }
